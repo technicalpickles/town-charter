@@ -40,7 +40,7 @@ workspace/
       bare.git/          # bare clone of the API repo
       worktrees/
         main/            # working area for the main branch
-        gt-pw2k--add-oauth/  # working area for a feature branch
+        add-oauth/       # working area for a feature branch
     frontend/
       bare.git/
       worktrees/
