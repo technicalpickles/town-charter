@@ -40,19 +40,19 @@ Concepts are the building blocks. Core concepts have no dependencies. Extensions
 
 - **[Workspace](concepts/workspace.md)**: The root directory that contains everything: repository references, working areas, work tracking, and AI configuration. This is the town itself.
 
-- **[Work Tracking](concepts/work-tracking.md)**: A file-based system for tracking tasks, features, and bugs as work units. Work units live alongside the code they describe, in the workspace, under version control.
+- **[Work Tracking](concepts/work-tracking.md)**: Knowing what you're working on, why, and what state it's in. A work unit ties together four things: a tracking item, a branch, a working area, and a review. Operating on work units as a whole is the key insight.
 
 ### Extensions
 
 Each extension has its dependencies noted.
 
-- **[Projects](concepts/projects.md)** (depends on: Workspace, Work Tracking): A project is a named subdirectory for work that spans multiple repositories or sessions. It holds plans, designs, and session handoffs for a coherent body of work.
+- **[Projects](concepts/projects.md)** (depends on: Workspace): When work spans multiple repositories or stretches across sessions, it needs a home. A project is a folder with structured subdirectories that lives in the town.
 
-- **[AI Conventions](concepts/ai-conventions.md)** (depends on: Workspace): The files and directory conventions that give AI assistants context: where to find instructions, how to discover active work, and what patterns to follow.
+- **[AI Conventions](concepts/ai-conventions.md)** (depends on: Workspace): Teaching your AI assistant how the town works through rules files and project-level instructions. Write conventions once; the AI applies them at every session start.
 
-- **[Session Handoffs](concepts/session-handoffs.md)** (depends on: Work Tracking, AI Conventions): Structured documents that preserve context across sessions. A handoff captures where you are, what you were doing, and what comes next, so work can resume without reconstruction.
+- **[Session Handoffs](concepts/session-handoffs.md)** (depends on: Workspace, optionally Projects): Structured documents that capture context when work stops mid-stream so you or an AI can resume later.
 
-- **[CLI Patterns](concepts/cli-patterns.md)** (depends on: Workspace, Work Tracking): Conventions for building a CLI that wraps common workspace operations. Covers command naming, ref resolution (accepting work unit IDs, PR numbers, or branch names interchangeably), and composing operations that span repositories.
+- **[CLI Patterns](concepts/cli.md)** (depends on: Workspace, Work Tracking): The town benefits from a CLI that operates on work units as a whole. Covers why a CLI exists (determinism, efficiency, single-entrypoint operations) without prescribing specific commands or syntax.
 
 ---
 
@@ -60,15 +60,15 @@ Each extension has its dependencies noted.
 
 Workflows show concepts in action. Each workflow describes a complete, concrete scenario. Implementations can use these as acceptance criteria.
 
-- **[Starting Work](workflows/starting-work.md)**: Create a work unit, check out a branch, and open a working area ready for development.
+- **[Starting New Work](workflows/starting-new-work.md)**: From "I need to work on X" to editing code. Create a work unit, set up a working area, start developing.
 
-- **[Resuming Work](workflows/resuming-work.md)**: Return to an in-progress work unit, locate its working area, and restore context from a handoff.
+- **[Resuming Work](workflows/resuming-work.md)**: Return to in-progress work. Find the working area, check the status, restore context.
 
-- **[Finishing Work](workflows/finishing-work.md)**: Verify a work unit is complete, create a pull request, and clean up the working area after merge.
+- **[Tracking a Repo](workflows/tracking-a-repo.md)**: Add an external repository to the town with conventions applied automatically.
 
-- **[Daily Orientation](workflows/daily-orientation.md)**: Survey active work units, open pull requests, and recent changes to understand the current state of a town.
+- **[Switching Context](workflows/switching-context.md)**: Move between different pieces of work without stashing or losing state.
 
-- **[Parking Work](workflows/parking-work.md)**: Write a session handoff for in-progress work so it can be resumed cleanly in a future session.
+- **[Closing Out Work](workflows/closing-out-work.md)**: PR merged, time to clean up. Verify completion, update tracking, remove the working area.
 
 ---
 
