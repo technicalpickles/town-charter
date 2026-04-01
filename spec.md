@@ -16,7 +16,7 @@ This spec targets anyone building or configuring a town: humans designing their 
 
 ## Origin
 
-Gastown (Steve Yegge's framework for AI-assisted development) introduced the idea of a git-managed workspace directory alongside your code repositories, with task tracking and structured session management as first-class concerns. Pickletown rebuilt that foundation with a simpler focus: convention-driven AI collaboration over infrastructure complexity, letting the directory structure and naming conventions carry most of the weight. Town Charter extracts the patterns that proved durable into a standalone spec that any implementation can follow.
+[Gas Town](https://steve-yegge.medium.com/welcome-to-gas-town-4f25ee16dd04) (Steve Yegge) is where the idea of a git-managed workspace directory, with task tracking and session management as first-class concerns, first clicked in practice. Gas Town itself is a full multi-agent orchestration system: agent colonies, molecular workflows, crash recovery. Pickletown took the structural patterns (workspace directory, work tracking alongside code, convention-driven AI collaboration) and built at a different point on the autonomy spectrum, starting with a single human-directed agent and growing toward more automation over time. Town Charter extracts the concepts that proved durable into a standalone spec.
 
 ---
 
