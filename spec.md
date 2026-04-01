@@ -89,3 +89,11 @@ Read the Philosophy section first. The rest of the spec implements those four id
 Browse the concepts that interest you. Each one is self-contained. You do not need to adopt all of them to get value from the spec.
 
 If you are building a town from scratch, start with the Workspace concept and the Starting Work workflow. Those two will show you enough structure to make good decisions about the rest.
+
+---
+
+## Why "Town"
+
+The metaphor matters. Other systems in this space draw from pop culture for their terminology, which creates a decoder-ring problem: you need to know the reference to understand the concept. Everyone has lived in a town. Everyone knows what a charter is.
+
+The metaphor scales naturally. A town has infrastructure. Residents do work there. Conventions and local knowledge accumulate over time. It can grow from a small settlement to something more complex. The language carries itself without explanation.
