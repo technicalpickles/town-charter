@@ -46,6 +46,8 @@ You are oriented and working in under a minute.
 
 **[Workspace](../concepts/workspace.md)**: Working areas are in predictable locations because the workspace defines where they live. There is no hunting for the right clone or directory. The structure carries the answer.
 
-**[Session Handoffs](../concepts/session-handoffs.md)**: When you stopped last time, you (or your AI assistant) may have written a handoff. It is a structured document with current state and next steps, written for exactly this moment. A good handoff turns resuming work from reconstruction into reading.
+**[Session Continuity](../concepts/session-continuity.md)**: When you stopped last time, you (or your AI assistant) may have parked the session with a handoff. That handoff captures the current state and next steps, written for exactly this moment. A good handoff turns resuming work from reconstruction into reading.
+
+**[Session Tracking](../concepts/session-tracking.md)**: If session tracking is in use, the resume operation can also show which previous sessions touched this work unit. That additional context, beyond just the handoff, helps you understand the full history of the work you are picking back up.
 
 **[CLI Patterns](../concepts/cli.md)**: The resume operation is a single deterministic call. It does not improvise. It finds the working area, loads the context, and gives you a path. That consistency is what makes it fast and reliable, whether you are doing it yourself or an AI assistant is doing it on your behalf.

@@ -22,7 +22,7 @@ This spec targets anyone building or configuring a town: humans designing their 
 
 ## Philosophy
 
-**Human-directed AI.** The human decides what work to do and when it is done. AI executes, suggests, and drafts. The workspace structure keeps that boundary visible: work units have statuses the human controls, and session handoffs preserve context without making decisions.
+**Human-directed AI.** The human decides what work to do and when it is done. AI executes, suggests, and drafts. The workspace structure keeps that boundary visible: work units have statuses the human controls, and handoffs preserve context without making decisions.
 
 **Convention over configuration.** Where you put things matters more than configuration files. A file in the right place with the right name communicates intent to both humans and AI without any additional setup.
 
@@ -50,7 +50,9 @@ Each extension has its dependencies noted.
 
 - **[AI Conventions](concepts/ai-conventions.md)** (depends on: Workspace): Teaching your AI assistant how the town works through rules files and project-level instructions. Write conventions once; the AI applies them at every session start.
 
-- **[Session Handoffs](concepts/session-handoffs.md)** (depends on: Workspace, optionally Projects): Structured documents that capture context when work stops mid-stream so you or an AI can resume later.
+- **[Session Tracking](concepts/session-tracking.md)** (depends on: Workspace, Work Tracking): Recording when sessions happen and what work they touch. Gives the town a queryable history of activity across all tracked repositories.
+
+- **[Session Continuity](concepts/session-continuity.md)** (depends on: Workspace, optionally Session Tracking, Projects): Capturing context when work stops and continuing from it when work resumes. Bridges the gap between stateless AI sessions through deliberate context engineering.
 
 - **[CLI Patterns](concepts/cli.md)** (depends on: Workspace, Work Tracking): The town benefits from a CLI that operates on work units as a whole. Covers why a CLI exists (determinism, efficiency, single-entrypoint operations) without prescribing specific commands or syntax.
 
@@ -70,13 +72,15 @@ Workflows show concepts in action. Each workflow describes a complete, concrete 
 
 - **[Closing Out Work](workflows/closing-out-work.md)**: PR merged, time to clean up. Verify completion, update tracking, remove the working area.
 
+- **[Reviewing Activity](workflows/reviewing-activity.md)**: Understand what happened across sessions. Query activity by date, work unit, or branch.
+
 ---
 
 ## How to Use This Spec
 
 ### For AI assistants
 
-Start with the core concepts: Workspace and Work Tracking. These define the structure you will operate in. Then read the concepts relevant to the current task. If you are writing a handoff, read Session Handoffs. If you are helping design a CLI, read CLI Patterns.
+Start with the core concepts: Workspace and Work Tracking. These define the structure you will operate in. Then read the concepts relevant to the current task. If you are writing a handoff, read Session Continuity. If you want to understand session activity, read Session Tracking. If you are helping design a CLI, read CLI Patterns.
 
 Use the workflows as a checklist. When a user asks you to start work, follow the Starting Work workflow. When they ask you to wrap up, follow Finishing Work.
 
