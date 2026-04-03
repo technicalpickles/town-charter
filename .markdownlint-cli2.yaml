@@ -1,0 +1,7 @@
+config:
+  default: true
+  # Allow longer lines in markdown (docs tend to have long lines)
+  MD013: false
+  # Allow duplicate headings in different files
+  MD024:
+    siblings_only: true

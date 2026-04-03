@@ -10,7 +10,7 @@ A project folder gives cross-repo work a versioned home inside the workspace. Pl
 
 A project is a directory inside the workspace with a consistent internal structure:
 
-```
+```text
 projects/<project-name>/
   README.md          # manifest: status, goals, key artifacts
   plans/             # implementation plans

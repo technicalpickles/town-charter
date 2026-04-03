@@ -1,0 +1,22 @@
+amends "package://github.com/jdx/hk/releases/download/v1.40.0/hk@1.40.0#/Config.pkl"
+
+local markdownlint = new Step {
+  glob = List("*.md", "**/*.md")
+  check = "markdownlint-cli2 {{files}}"
+  fix = "markdownlint-cli2 --fix {{files}}"
+}
+
+local lychee = new Step {
+  glob = List("*.md", "**/*.md")
+  check = "lychee --no-progress {{files}}"
+}
+
+hooks {
+  ["pre-commit"] {
+    fix = true
+    steps {
+      ["markdownlint"] = markdownlint
+      ["lychee"] = lychee
+    }
+  }
+}

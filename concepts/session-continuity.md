@@ -38,7 +38,7 @@ You are three hours into implementing a feature. The AI assistant's context is h
 
 Rather than pushing through with degraded context, you park. The assistant captures the current state into a handoff:
 
-```
+```text
 Status: In progress
 Work unit: gt-ab12
 

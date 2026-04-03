@@ -1,0 +1,3 @@
+[tools]
+"npm:markdownlint-cli2" = "latest"
+lychee = "latest"

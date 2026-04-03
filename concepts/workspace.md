@@ -33,7 +33,7 @@ A workspace implementation supports:
 
 Say you work on three services: an API, a frontend, and a shared library. You add all three to your workspace. The result looks like this:
 
-```
+```text
 workspace/
   repos/
     api/
