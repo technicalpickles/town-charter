@@ -65,6 +65,8 @@ You continue into a fresh session. The new session reads the handoff. In under a
 
 Another scenario: you hit the context limit mid-task. The assistant writes a handoff as its last act. You continue the next day. The handoff tells the new session exactly where you left off. The gap between sessions is invisible.
 
+For a concrete implementation of this concept, see the [Pickletown example](../examples/pickletown/README.md#session-continuity).
+
 ## Design Considerations
 
 **Optimize for fast creation.** Handoffs are written often and read occasionally. The format should be easy to produce quickly. A rushed but complete handoff is more valuable than a polished one that never gets written. When in doubt, capture more rather than less: the next session can skip context it does not need, but it cannot recover context that was never written down.

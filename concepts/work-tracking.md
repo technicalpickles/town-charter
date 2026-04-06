@@ -41,6 +41,8 @@ When the PR merges, you close the work unit. The tool confirms the branch is mer
 
 The four pieces stay connected throughout: you never need to remember which branch corresponds to which issue or which directory corresponds to which branch. The work unit carries all of it.
 
+For a concrete implementation of this concept, see the [Pickletown example](../examples/pickletown/README.md#work-tracking).
+
 ## Design Considerations
 
 **The backing store is not prescribed.** A work unit is an abstraction, not a specific tool. Implementations can use any tracking system: a directory of plain files, GitHub issues, a dedicated issue tracker, or something custom. What matters is that the four components of the work unit stay connected and can be operated on together.

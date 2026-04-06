@@ -34,6 +34,8 @@ For example, resuming work manually means locating the working area, opening the
 
 The manual approach is not just slow; it is fragile. The CLI is neither.
 
+For a concrete implementation of this concept, see the [Pickletown example](../examples/pickletown/README.md#cli-patterns).
+
 ## Design Considerations
 
 **The spec does not prescribe command names, flag syntax, or output format.** What matters is that each operation is a single entrypoint, produces the same result every time, and is composable with other tools. The CLI should feel like a thin layer over the workspace and work tracking concepts, not a separate system.

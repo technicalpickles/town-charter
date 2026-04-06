@@ -47,6 +47,8 @@ Three weeks in, a teammate asks about the sequencing decisions. You point them t
 
 When the migration finishes, the project folder is a complete record of how it happened: the original plans, the decisions, the course corrections, the handoffs that carried context between sessions. It does not disappear into a chat log.
 
+For a concrete implementation of this concept, see the [Pickletown example](../examples/pickletown/README.md#projects).
+
 ## Design Considerations
 
 **The subdirectory structure is opinionated, but the names and contents can vary.** `plans/`, `design/`, `brainstorming/`, `handoffs/` are a sensible default. Teams may rename or reorganize to fit their workflow. The key property is that cross-repo work has a single versioned home, not that it follows a precise directory layout.

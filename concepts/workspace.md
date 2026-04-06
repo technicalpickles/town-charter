@@ -58,6 +58,8 @@ When you need to start a feature on the API, you create a working area for a new
 
 The workspace documentation and AI conventions travel with all of this. Whatever rules and context you have written into the workspace apply every time an AI assistant starts a session. You write them once; they apply everywhere.
 
+For a concrete implementation of this concept, see the [Pickletown example](../examples/pickletown/README.md#workspace).
+
 ## Design Considerations
 
 **Bare clone plus worktree is the recommended approach**, but the workspace concept does not require it. The key property is branch isolation: multiple branches active simultaneously in separate directories. Implementations could use shallow clones, symlinks, or other mechanisms. The directory layout described above is opinionated, and conforming to it makes tooling and conventions portable across towns.

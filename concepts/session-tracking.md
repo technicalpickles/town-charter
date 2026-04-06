@@ -41,6 +41,8 @@ At the end of the week, you query sessions for the last seven days. The output s
 
 A colleague asks when a particular branch last got attention. You query sessions associated with that branch name. The answer comes back: three days ago, in a session that also touched two related work units. Context that would have taken several minutes of git archaeology comes back in seconds.
 
+For a concrete implementation of this concept, see the [Pickletown example](../examples/pickletown/README.md#session-tracking).
+
 ## Design Considerations
 
 **Append-only is the right model.** Session events accumulate over time. They should not be edited or rewritten. An append-only log, whatever the format, keeps the implementation simple and the history trustworthy.

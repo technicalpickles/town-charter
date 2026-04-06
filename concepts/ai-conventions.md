@@ -39,6 +39,8 @@ The rule set grows to reflect your working style. Each rule is a correction you 
 
 When you work in a new repository, the conventions are already there. The assistant arrives oriented rather than blank.
 
+For a concrete implementation of this concept, see the [Pickletown example](../examples/pickletown/README.md#ai-conventions).
+
 ## Design Considerations
 
 **Rules should be prescriptive and actionable, not philosophical.** "Prefer clarity" is not a rule; the assistant cannot act on it. "Use absolute paths in all bash commands, never relative paths" is a rule. Good conventions read like standing instructions: specific enough that following or violating them is unambiguous.
