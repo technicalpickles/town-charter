@@ -8,6 +8,31 @@ A spec for AI-assisted multi-repo development workspaces.
 
 A town is a git repo that organizes multiple external repositories, tracks work across them, and teaches AI assistants your conventions. It gives your development work a home that is versioned, shareable, and durable. Towns are meant to be inhabited: you commit plans, session handoffs, and working notes alongside the tooling that helps you navigate them.
 
+## What does that look like?
+
+[Pickletown](examples/pickletown/README.md) is a working town that has been in daily use since early 2026, managing ~19 repositories across a Rails monolith, open-source tools, and infrastructure projects.
+
+```text
+~/pickleton/
+  repos/
+    zenpayroll/
+      bare.git/
+      worktrees/
+        main/
+        gt-pw2k+add-oauth/
+    gusto-karafka/
+      bare.git/
+      worktrees/
+        main/
+  projects/
+  .claude/
+  .sessions/
+```
+
+Each repository is tracked as a bare clone with isolated working areas per branch. Multiple branches are active simultaneously, no stashing or switching required. A CLI (`pt`) ties it together: one command to check the status of a piece of work across its tracking item, branch, worktree, and PR.
+
+The [Pickletown companion](examples/pickletown/README.md) maps each spec concept to its concrete implementation, with real commands, real output, and honest notes about what works and what is still rough.
+
 ## What is this repo?
 
 This repo is the spec. It describes the concepts, motivations, and interfaces that make a town work. It is for humans designing their workspace and AI assistants operating within one. There is nothing to install.
