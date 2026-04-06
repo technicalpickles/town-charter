@@ -262,3 +262,69 @@ This association is partially automated: the directory-to-repo-to-branch chain i
 **Association discovery is basic.** The working directory gives you repo and branch, but that is the extent of the automation. If a session discusses work across multiple repos, only the starting directory gets recorded.
 
 **Transcript scanning is not automated yet.** A session transcript contains rich information about what was discussed, which beans were referenced, and what decisions were made. Extracting that information is manual today. An automated pipeline from transcript to associations would close the gap, but it does not exist yet.
+
+---
+
+## Session Continuity
+
+> The spec's [Session Continuity](../../concepts/session-continuity.md) concept: preserving context across session boundaries so new sessions can pick up where previous ones left off.
+
+Pickletown uses the `agent-meta` skill (with `park` and `unpark` commands) to capture and restore session context. When you park a session, the skill writes a handoff document. When you start a new session and unpark, it reads that document and orients the session before any work begins.
+
+### Handoffs
+
+A handoff is a markdown file that captures the state of work at the moment you stop. Handoffs go to `projects/<name>/handoffs/` when a project exists, or `docs/handoffs/` as a fallback. Filenames are date-prefixed: `2026-04-03-gdev-wish-ci-consolidation.md`.
+
+Each handoff captures:
+
+- **Work unit reference.** The bean ID, branch, and PR so the new session can find the code.
+- **What was being done.** The goal of the session, not just the last command.
+- **Current state.** What is working, what is broken, what is half-finished.
+- **Next steps.** Concrete actions, not vague directions.
+- **Decisions made.** Why the current approach was chosen, what alternatives were rejected.
+
+The `agent-meta:park` skill automates the capture. It prompts for the key fields and writes the handoff file. `agent-meta:unpark` reads a handoff and loads the context into a fresh session.
+
+### What Works Well
+
+**Fresh sessions with clean context.** Each new session starts from the handoff rather than inheriting stale state from a long-running conversation. There is no accumulated confusion from abandoned approaches or forgotten dead ends. The new session gets exactly the context it needs and nothing else.
+
+### What is Rough
+
+**Handoffs degrade over time.** A handoff written yesterday is useful. A handoff written two weeks ago may describe code that has since changed, decisions that were revisited, or next steps that are no longer relevant. There is no automated staleness detection for old handoffs, so you have to judge freshness yourself.
+
+---
+
+## CLI Patterns
+
+> The spec's [CLI Patterns](../../concepts/cli.md) concept: a local command-line tool that encodes workspace conventions into deterministic operations.
+
+Pickletown's CLI is `pt` (alias for `pickletown`), built in Node.js. It wraps git, GitHub, and beans operations into commands that enforce the workspace's directory conventions and work unit model.
+
+### Core Commands
+
+The commands map to four areas:
+
+**Repo management.** `pt track` adds a repository to the workspace (bare clone plus initial worktree). `pt list` shows what is tracked.
+
+**Working area management.** `pt checkout` creates a worktree in the right place with the right naming convention. `pt worktrees` lists active worktrees across one or all repos.
+
+**Work unit lifecycle.** `pt status` shows the combined state of a bean, branch, worktree, and PR. `pt resume` prints the worktree path and loads context for picking work back up. `pt close` verifies the PR merged, updates the bean, and offers to clean up the worktree.
+
+**Overview.** `pt worktrees` gives a cross-repo view of all active working areas. `pt beans list` shows tracking items, filterable by tag, status, or repo.
+
+### Ref Resolution
+
+All workflow commands accept flexible refs. A bean ID (`gt-pw2k`), a short ID (`pw2k`), a PR number (`#123`), or a full GitHub URL all resolve to the same work unit. The CLI figures out which repo, branch, worktree, and PR you mean. You use whatever identifier you have at hand.
+
+### What Works Well
+
+**Deterministic operations.** `pt checkout zenpayroll my-branch` always creates the worktree at `repos/zenpayroll/worktrees/my-branch/`. There is no ambiguity about where things go. One command replaces what would otherwise be four manual steps (fetch, create worktree, set path, trust mise).
+
+**Convention enforcement.** The CLI encodes the workspace's directory layout and naming patterns. You cannot accidentally create a worktree in the wrong place or track a repo with a conflicting name, because the tool prevents it.
+
+### What is Rough
+
+**Coverage gaps.** Some workflows still require raw git commands. There is no `pt project create` for scaffolding projects, no `pt beans comment` for appending to a bean, and some git operations (interactive rebase, cherry-pick) have no pt wrapper and probably should not.
+
+**Discovery.** There is no `pt help` that explains the overall workflow model. Each command has its own help text, but the relationship between commands (track, then checkout, then status, then close) is only documented in `.claude/rules/` files. A new user would not know the intended flow without reading those rules.
