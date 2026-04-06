@@ -271,7 +271,7 @@ This association is partially automated: the directory-to-repo-to-branch chain i
 
 > The spec's [Session Continuity](../../concepts/session-continuity.md) concept: preserving context across session boundaries so new sessions can pick up where previous ones left off.
 
-Pickletown uses the `agent-meta` skill (with `park` and `unpark` commands) to capture and restore session context. When you park a session, the skill writes a handoff document. When you start a new session and unpark, it reads that document and orients the session before any work begins.
+Pickletown uses the [`agent-meta`](https://github.com/technicalpickles/pickled-claude-plugins) skill (with `park` and `unpark` commands) to capture and restore session context. When you park a session, the skill writes a handoff document. When you start a new session and unpark, it reads that document and orients the session before any work begins.
 
 ### Handoffs
 
