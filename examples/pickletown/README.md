@@ -329,6 +329,8 @@ All workflow commands accept flexible refs. A bean ID (`gt-pw2k`), a short ID (`
 
 **Coverage gaps.** Some workflows still require raw git commands. There is no `pt project create` for scaffolding projects, no `pt beans comment` for appending to a bean, and some git operations (interactive rebase, cherry-pick) have no pt wrapper and probably should not.
 
+**Name collision.** `pt` conflicts with a different `pt` available through Homebrew. If you have the Homebrew version installed, you need to adjust your PATH to prefer Pickletown's `pt` or create a shell alias. This was an early surprise that required manual intervention.
+
 **Discovery.** There is no `pt help` that explains the overall workflow model. Each command has its own help text, but the relationship between commands (track, then checkout, then status, then close) is only documented in `.claude/rules/` files. A new user would not know the intended flow without reading those rules.
 
 ---
