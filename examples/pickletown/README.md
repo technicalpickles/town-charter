@@ -154,6 +154,8 @@ Ref resolution is flexible. Bean ID (`gt-pw2k`), short ID (`pw2k`), PR number (`
 
 **Discovered associations require manual linking.** When you realize two beans are related, or that a bean should be tagged with a project, you update each one by hand. There is no automatic linking from branch names, PR references, or commit messages.
 
+**Keeping beans committed is a chore.** Because beans are files in the workspace repo, every status change, every new bean, every body update is an uncommitted change. During active work, bean updates pile up and the workspace gets dirty. This was one of the drivers behind Pickletown's sanitation system (covered in [Beyond the Spec](beyond-the-spec.md)): automated sweeps that commit accumulated bean changes and keep the workspace clean.
+
 ---
 
 ## Projects
