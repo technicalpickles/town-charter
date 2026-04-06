@@ -328,3 +328,132 @@ All workflow commands accept flexible refs. A bean ID (`gt-pw2k`), a short ID (`
 **Coverage gaps.** Some workflows still require raw git commands. There is no `pt project create` for scaffolding projects, no `pt beans comment` for appending to a bean, and some git operations (interactive rebase, cherry-pick) have no pt wrapper and probably should not.
 
 **Discovery.** There is no `pt help` that explains the overall workflow model. Each command has its own help text, but the relationship between commands (track, then checkout, then status, then close) is only documented in `.claude/rules/` files. A new user would not know the intended flow without reading those rules.
+
+---
+
+## Workflow Narrative
+
+The seven concepts above are building blocks. This section shows how they compose over the course of a real day.
+
+### Starting new work
+
+> See also: [Starting New Work](../../workflows/starting-new-work.md)
+
+A Slack thread surfaces a bug in the payroll calculation service. Time to fix it.
+
+```text
+$ pt beans create "Fix overtime calc rounding error" -t bug -s in-progress --tag repo-zenpayroll
+Created gt-mw7f  Fix overtime calc rounding error
+
+$ pt checkout zenpayroll gt-mw7f+fix-overtime-rounding
+Fetching origin...
+Creating worktree at repos/zenpayroll/worktrees/gt-mw7f+fix-overtime-rounding/
+Done.
+
+$ cd ~/pickleton/repos/zenpayroll/worktrees/gt-mw7f+fix-overtime-rounding/
+```
+
+Three things now exist as a single unit: a bean for tracking, a branch for code, and a worktree for an isolated working area. The branch name carries the bean ID, so the connection is structural. You are in the directory, looking at code.
+
+### Switching context
+
+> See also: [Switching Context](../../workflows/switching-context.md)
+
+Mid-fix, a teammate asks for a review on a switchboard PR. You need to look at their code, but you have uncommitted changes in the overtime fix.
+
+```text
+$ pt worktrees switchboard
+switchboard
+  main              clean
+  gt-k4r1+add-dlq   3 uncommitted
+
+$ cd ~/pickleton/repos/switchboard/worktrees/main/
+```
+
+Your overtime worktree stays exactly as you left it: uncommitted files, half-written test, editor state. You did not stash anything. You did not commit a placeholder. You walked to a different directory.
+
+You review the PR, leave comments, and walk back.
+
+### Resuming work
+
+> See also: [Resuming Work](../../workflows/resuming-work.md)
+
+Back to the overtime fix. You remember the bean ID from earlier (or check `pt beans list -s in-progress`).
+
+```text
+$ pt resume gt-mw7f
+
+Bean:      gt-mw7f  in-progress  bug  [normal]
+Title:     Fix overtime calc rounding error
+Branch:    gt-mw7f+fix-overtime-rounding
+Worktree:  ~/pickleton/repos/zenpayroll/worktrees/gt-mw7f+fix-overtime-rounding/
+PR:        (none)
+
+$ cd ~/pickleton/repos/zenpayroll/worktrees/gt-mw7f+fix-overtime-rounding/
+```
+
+One command gives you the full picture: where the code is, what state the work is in, whether a PR exists yet. Your uncommitted changes are still there. You pick up exactly where you stopped.
+
+### Tracking a repo
+
+> See also: [Tracking a Repo](../../workflows/tracking-a-repo.md)
+
+Later that afternoon, a thread in Slack mentions a flaky test in a repo you have not worked with before: `gusto-karafka`.
+
+```text
+$ pt list | grep karafka
+(no output)
+
+$ pt track git@github.com:Gusto/gusto-karafka.git --name gusto-karafka
+Cloning into bare repo at repos/gusto-karafka/bare.git/...
+Creating initial worktree at repos/gusto-karafka/worktrees/main/
+Done. Run: mise trust ~/pickleton/repos/gusto-karafka/worktrees/main
+
+$ pt checkout gusto-karafka gt-t92v+fix-flaky-consumer-test
+Fetching origin...
+Creating worktree at repos/gusto-karafka/worktrees/gt-t92v+fix-flaky-consumer-test/
+Done.
+```
+
+The new repo is tracked in the workspace, following the same conventions as every other repo. Your AI assistant can discover it. Navigation works the same way. Six months from now, when someone asks "where is the gusto-karafka repo," the answer is the same as it is for every other repo: `repos/gusto-karafka/worktrees/`.
+
+### Closing out work
+
+> See also: [Closing Out Work](../../workflows/closing-out-work.md)
+
+The overtime fix PR got approved and merged. Time to clean up.
+
+```text
+$ pt close gt-mw7f
+
+PR #4892 is merged. Proceeding.
+Updated gt-mw7f status: in-progress → completed
+Removing worktree: repos/zenpayroll/worktrees/gt-mw7f+fix-overtime-rounding/
+Pruning branch: gt-mw7f+fix-overtime-rounding
+Done.
+```
+
+One command verifies the merge, updates the bean, removes the worktree, and prunes the branch. Everything that was created together gets cleaned up together.
+
+### Reviewing activity
+
+> See also: [Reviewing Activity](../../workflows/reviewing-activity.md)
+
+End of day. You want to know what you touched.
+
+The session log in `.sessions/session-index.jsonl` has a line for every session that started today: which directory, which branch, what time. Grepping it by date gives you a timeline.
+
+```text
+$ grep "2026-04-06" .sessions/session-index.jsonl | jq -r '[.ts, .cwd] | @tsv'
+2026-04-06T09:14:22Z    /Users/josh/pickleton/repos/zenpayroll/worktrees/gt-mw7f+fix-overtime-rounding
+2026-04-06T11:03:44Z    /Users/josh/pickleton/repos/switchboard/worktrees/main
+2026-04-06T11:41:09Z    /Users/josh/pickleton/repos/zenpayroll/worktrees/gt-mw7f+fix-overtime-rounding
+2026-04-06T14:15:33Z    /Users/josh/pickleton/repos/gusto-karafka/worktrees/gt-t92v+fix-flaky-consumer-test
+2026-04-06T16:50:01Z    /Users/josh/pickleton/repos/town-charter/worktrees/main
+```
+
+Five sessions, four repos, the full shape of the day. Sessions that produced commits sit alongside sessions that were pure investigation. The gazette (covered in [Beyond the Spec](beyond-the-spec.md)) turns this raw data into a daily summary, but the session log is the foundation.
+
+---
+
+That is one day. The pattern repeats: create work, switch freely, resume by reference, track new repos as they appear, close what is done, review what happened. Each workflow is a single operation because the workspace structure and the work unit model make it possible. The commands are simple. The simplicity comes from the conventions underneath.
