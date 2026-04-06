@@ -78,7 +78,7 @@ The CLI is `pt` (short for `pickletown`). Two commands handle the workspace life
 
 **Multiple branches active simultaneously.** The main benefit of the bare-clone-plus-worktree approach. You can have a PR under review in one worktree, a hotfix in another, and a spike in a third, all for the same repo, all checked out and ready. No stashing, no branch switching, no reconstructing state.
 
-**Convention-based navigation.** Because every repo and every worktree follows the same directory pattern, both humans and AI assistants can find things by convention. `repos/zenpayroll/worktrees/main/` is predictable. No configuration lookup required.
+**Convention-based navigation.** Because every repo and every worktree follows the same directory pattern, both humans and AI assistants can find things by convention. `repos/zenpayroll/worktrees/main/` is predictable. No configuration lookup required. That said, typing out these paths by hand is tedious. AI assistants navigate by convention just fine, but for humans, a `cd` helper (likely a shell alias or function, since a subprocess cannot change the parent shell's directory) would make this practical. Pickletown does not have one yet.
 
 ### What is Rough
 
