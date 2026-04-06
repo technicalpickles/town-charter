@@ -6,7 +6,7 @@ Pickletown is a real town. One developer uses it daily to manage work across ~19
 
 This document maps each spec concept to its Pickletown implementation: the directory layout, the CLI commands, the conventions that stuck, and the rough edges that remain. It is honest about what works and what does not.
 
-<!-- markdownlint-disable MD036 MD051 -->
+<!-- markdownlint-disable MD036 -->
 
 ## Table of Contents
 
@@ -26,7 +26,7 @@ This document maps each spec concept to its Pickletown implementation: the direc
 
 **See also:** [Beyond the Spec](beyond-the-spec.md) covers Pickletown patterns that go further than Town Charter defines.
 
-<!-- markdownlint-enable MD036 MD051 -->
+<!-- markdownlint-enable MD036 -->
 
 ---
 
