@@ -96,6 +96,14 @@ If you are building a town from scratch, start with the Workspace concept and th
 
 ---
 
+## Examples
+
+[Pickletown](examples/pickletown/README.md) is a working town that has been in active use since early 2026. It implements all seven concepts using beans for work tracking, a custom CLI (`pt`), and Claude Code for AI assistance. The companion document maps each concept to its concrete implementation.
+
+For extensions that go beyond this spec (automated agents, generated summaries, reusable skill workflows), see [Beyond the Spec](examples/pickletown/beyond-the-spec.md).
+
+---
+
 ## Why "Town"
 
 The metaphor matters. Other systems in this space draw from pop culture for their terminology, which creates a decoder-ring problem: you need to know the reference to understand the concept. Everyone has lived in a town. Everyone knows what a charter is.

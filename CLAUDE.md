@@ -8,6 +8,7 @@ This is a prose spec, not application code. All content is markdown. There is no
 - `concepts/` contains the building blocks. Each file is self-contained. Core concepts (Workspace, Work Tracking) have no dependencies. Extensions note their dependencies at the top of their spec.md entry.
 - `workflows/` contains concepts in action. Each file describes a complete scenario that shows how concepts work together.
 - `autonomy-spectrum.md` is a standalone reference doc on the stages of agentic coding, linked from spec.md.
+- `examples/` contains companion documents showing how real towns implement the spec's concepts. Each subdirectory is a different town. Currently: `examples/pickletown/`.
 - `README.md` is the GitHub landing page. It is short and points to spec.md.
 
 Non-content files: `hk.pkl` (pre-commit hooks), `mise.toml` (tool versions), `.markdownlint-cli2.yaml` (lint config), `lychee.toml` (link checker config).
