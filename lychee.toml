@@ -4,6 +4,9 @@
 # Accept 403 responses (some sites like Medium block bots)
 accept = [200, 403]
 
+# Medium links frequently timeout in CI/pre-commit
+exclude = ["https://steve-yegge.medium.com/.*"]
+
 # Skip external link checking in pre-commit (too slow, network dependent)
 # Uncomment to check only local links:
 # skip_missing = true
