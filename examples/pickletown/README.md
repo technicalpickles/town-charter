@@ -196,3 +196,69 @@ Each project has an epic bean. The town-charter project's epic is `gt-rp12`. Rel
 **No automated project scaffolding.** Creating a new project means remembering the directory structure, creating the epic bean, and writing the README manifest by hand. A `pt project create` command would help, but it does not exist yet.
 
 **README manifests drift.** The project README is only accurate if someone actively maintains it. Beans get completed, new ones get created, and the manifest falls behind. There is no automation to keep it in sync with the actual bean state.
+
+---
+
+## AI Conventions
+
+> The spec's [AI Conventions](../../concepts/ai-conventions.md) concept: persistent instructions that shape how AI assistants behave in your workspace, accumulated over time rather than designed upfront.
+
+Pickletown uses Claude Code's `.claude/rules/` directory to store conventions. There are currently seven rule files, each one a response to friction that got expensive enough to write down.
+
+### The Rule Files
+
+- **`beans.md`** ensures `pt beans` is used within Pickletown rather than bare `beans`. Without this, beans can end up in a `.beans.yml` found in a tracked repo instead of the workspace's configured directory.
+- **`code-reviews.md`** defines the PR review workflow: when to suggest reviews, how to save artifacts, how to handle findings.
+- **`projects.md`** documents the project folder structure, the relationship between projects and epic beans, and handoff conventions.
+- **`pt-source-protection.md`** prevents modifying pt's own source code during unrelated work. If you are fixing a bug in zenpayroll and notice something wrong with pt, the rule says to create a bean, not edit the CLI mid-task.
+- **`pt-workflow.md`** documents pt's workflow commands and ref resolution so sessions can use `pt status`, `pt resume`, and `pt close` correctly.
+- **`working-with-external-repos.md`** is a checklist for tracking repos before touching code. Check if it is tracked, check if the URL is tracked under a different name, create a worktree through `pt checkout`.
+- **`working-with-mise.md`** covers mise trust requirements and what to do when trust errors appear. The rule exists because those errors are easy to dismiss as noise when they actually block real work.
+
+### How They Accumulate
+
+These rules were not designed as a system. Each one started the same way: an AI session did something wrong, it cost time to fix, and the correction got written down so it would not happen again. `pt-source-protection.md` exists because a session once edited CLI source code while working on an unrelated repo. `working-with-mise.md` exists because sessions kept ignoring trust errors.
+
+The accumulation pattern works well. Rules compound: a new session that reads all seven files starts with orientation that took weeks to develop. Problems that used to recur across sessions get fixed once and stay fixed.
+
+### What is Rough
+
+**Rules can go stale.** As workflows evolve, the rules that describe them may not keep up. A command gets renamed, a convention shifts, and the rule file still describes the old way. There is no validation that rules are still accurate.
+
+**No feedback loop for effectiveness.** It is hard to tell which rules are actually preventing mistakes versus which ones are just taking up context window space. Some rules might be unnecessary because the underlying issue was fixed elsewhere, but there is no mechanism to detect that.
+
+---
+
+## Session Tracking
+
+> The spec's [Session Tracking](../../concepts/session-tracking.md) concept: recording when AI sessions happen and what they touch, so you can reconstruct a timeline of work later.
+
+Pickletown records sessions in `.sessions/session-index.jsonl`. A hook fires at session start and captures the session ID, timestamp, working directory, branch, and source.
+
+### The Log
+
+Each session start produces one line:
+
+```json
+{"event":"start","session_id":"abc123","ts":"2026-04-06T17:59:51Z","cwd":"/Users/josh/pickleton/repos/zenpayroll/worktrees/main","branch":"main","source":"hook"}
+```
+
+The log is append-only JSONL. Because it includes the working directory, you can answer questions like "when did this branch last get attention" or "how many sessions touched zenpayroll this week" with a grep.
+
+### Associations
+
+The working directory in each log entry resolves to a repo and branch through the workspace's directory conventions. A branch often maps to a bean (via the `gt-xxxx` prefix in worktree names). So a session entry implicitly associates with a bean, a repo, and sometimes a PR.
+
+This association is partially automated: the directory-to-repo-to-branch chain is structural. The rest is partially manual. References discovered in transcripts after the fact (a session that discussed bean `gt-pw2k` without being in its worktree) require someone to notice and record the link.
+
+### What Works Well
+
+**Queryable session history.** The JSONL format is simple and greppable. Finding all sessions for a branch, a repo, or a time range is a one-liner. The log grows slowly (one line per session start) so it stays manageable.
+
+**Ambient capture.** Because the hook fires automatically, session tracking requires zero discipline. You do not have to remember to log your work. Every session that starts in the workspace gets recorded.
+
+### What is Rough
+
+**Association discovery is basic.** The working directory gives you repo and branch, but that is the extent of the automation. If a session discusses work across multiple repos, only the starting directory gets recorded.
+
+**Transcript scanning is not automated yet.** A session transcript contains rich information about what was discussed, which beans were referenced, and what decisions were made. Extracting that information is manual today. An automated pipeline from transcript to associations would close the gap, but it does not exist yet.
