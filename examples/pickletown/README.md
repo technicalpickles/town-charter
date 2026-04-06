@@ -82,9 +82,9 @@ The CLI is `pt` (short for `pickletown`). Two commands handle the workspace life
 
 ### What is Rough
 
-**Worktrees need `mise trust` after creation.** Pickletown uses mise for tool version management. Every new worktree is an untrusted directory until you run `mise trust`, which means tools (ruby, node, etc.) and pre-commit hooks will not work until you do. It is easy to forget and confusing when it fails silently.
-
 **Disk usage from many active worktrees.** Each worktree is a full checkout. A large monolith with 15 active worktrees uses real disk space. Cleanup discipline matters, and it is the kind of thing that slips when you are busy. Pickletown's sanitation system (covered in [Beyond the Spec](beyond-the-spec.md)) helps with this, but the underlying cost is still there.
+
+**Worktrees created outside `pt checkout` need manual setup.** `pt checkout` runs a post-checkout hook that handles `mise trust` automatically, so worktrees created through `pt` just work. Worktrees created with raw `git worktree add` skip that hook, and tools (ruby, node, etc.) and pre-commit hooks will not work until you run `mise trust` by hand.
 
 ---
 
