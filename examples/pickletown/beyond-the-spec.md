@@ -16,15 +16,17 @@ These are not prescriptions. They are experiments that emerged from daily use. S
 
 A citizen is an automated agent that can run against the town. The concept: define a role with a name, a description, a scope, and a set of skills, then let it operate. There are a handful of experimental citizens today (Engineer, Clerk, Reporter, Paige Turner, Slab Serif), but only one does real load-bearing work: the Sanitation Worker. It was the first citizen built, and it is where the pattern was shaken out.
 
-### Why Sanitation Exists
+### Sanitation Worker
+
+The sanitation worker runs maintenance sweeps across the town: cleaning up merged worktrees, triaging beans that have gone quiet, keeping tool repos current with upstream, and flagging workspace health issues. The role is deliberately narrow. It does not write code, answer questions, or weigh in on design. It sweeps, and that is all.
+
+#### Why It Exists
 
 A working town accumulates cruft. Branches merge but their worktrees hang around. Beans get marked `in-progress`, worked on for an afternoon, and then forgotten when something more interesting shows up. Tool repos drift out of sync with upstream. `main` falls behind. State files pile up in the workspace repo itself. None of this is a crisis on its own, but it compounds. After a month of daily use across ~19 repos, you have a dozen stale worktrees, twenty questionable beans, and a few repos where `main` is two weeks behind.
 
 Any single item takes thirty seconds to handle. The aggregate is the chore nobody gets around to, so the town gets progressively worse to live in. Sanitation exists to make that chore tractable.
 
-### The Role
-
-Sanitation is deliberately narrow. It does not write code, answer questions, or weigh in on design. It sweeps. Its job is to notice the boring problems a human would never prioritize on their own, and either fix them automatically or flag them with enough context that a human can approve or dismiss each one in under a minute.
+#### What It Checks
 
 The checks cover the kinds of cruft that accumulate in a real town:
 
@@ -36,7 +38,7 @@ The checks cover the kinds of cruft that accumulate in a real town:
 
 Each finding gets a severity tier (`error`, `warning`, `notice`, `ok`) so a scanning human can ignore anything below `warning` on a quick pass.
 
-### The Two-Pass Workflow
+#### The Two-Pass Workflow
 
 Early sanitation runs had a problem. The citizen would receive raw findings and then spend thirty tool calls re-investigating each one: which worktree is this, what is its PR status, when did this bean last change. Every answer required running `pt` or `gh` or `git` again, which burned context and made a ten-minute sweep take forty.
 
@@ -47,7 +49,7 @@ The fix was to split the work into two passes:
 
 Three tool calls instead of thirty. The interesting work (judgment) is where the citizen spends its turns, and the boring work (gathering context, running commands) happens in deterministic code outside the agent. The decisions file also serves as a lightweight audit trail, since every run leaves a record of what the citizen chose to do and what it passed on.
 
-### The Definition
+#### The Definition
 
 Citizens are defined in YAML files under `citizens/<name>/`:
 
@@ -67,7 +69,7 @@ bootstrap:
 
 The `bootstrap` step runs before the citizen launches and produces the enriched action plan. The plan becomes the citizen's starting context, so it begins each run fully briefed.
 
-### The Reality
+#### The Reality
 
 Sanitation is manually invoked. You run `pt citizen sanitation` and it launches a Claude Code session with the pre-computed plan in hand. It is not scheduled, not triggered by events, not autonomous.
 
