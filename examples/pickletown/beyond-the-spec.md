@@ -1,18 +1,20 @@
 # Beyond the Spec
 
-> Last updated: 2026-04-06. These are experiments built on the spec's foundation. Some have stuck, some are still evolving.
+> Last updated: 2026-05-06. These are experiments built on the spec's foundation. Some have stuck, some are still evolving.
 
 **[Back to the Pickletown companion](README.md)** if you arrived here directly.
 
 <!-- markdownlint-disable MD036 -->
 
-The [Town Charter spec](../../spec.md) defines seven concepts. Pickletown implements all of them, covered in the [main companion](README.md). This document covers what Pickletown has built on top of that foundation: citizens, a daily newspaper, a skill system, extended project patterns, and an expanded bean ecosystem.
+The [Town Charter spec](../../spec.md) defines seven concepts. Pickletown implements all of them, covered in the [main companion](README.md). This document covers what Pickletown has built on top of that foundation: three kinds of automation (citizens, workflows, and skills), a daily newspaper, extended project patterns, and an expanded bean ecosystem.
 
 These are not prescriptions. They are experiments that emerged from daily use. Some are genuinely useful. Some are playful. A few are both.
 
 ---
 
 ## Citizens
+
+A citizen is one of three kinds of automation Pickletown reaches for, alongside workflows and skills. The split exists because automation needs different things at different moments: judgment about how to handle messy reality (citizen), deterministic execution of a known sequence (workflow), or in-session instructions that shape the current Claude Code conversation (skill). Citizens have a persona and agency. Workflows are subprocesses with neither. Skills load instructions into the current session. Citizens *use* workflows and skills, not the other way around.
 
 A citizen is an automated agent that can run against the town. The concept: define a role with a name, a description, a scope, and a set of skills, then let it operate. There are a handful of experimental citizens today (Engineer, Clerk, Reporter, Paige Turner, Slab Serif), but only one does real load-bearing work: the Sanitation Worker. It was the first citizen built, and it is where the pattern was shaken out.
 
@@ -74,6 +76,53 @@ The `bootstrap` step runs before the citizen launches and produces the enriched 
 Sanitation is manually invoked. You run `pt citizen sanitation` and it launches a Claude Code session with the pre-computed plan in hand. It is not scheduled, not triggered by events, not autonomous.
 
 The aspiration is autonomous operation: a citizen that runs on a schedule, files its own beans for problems it finds, and cleans up what it can without asking. The current reality is human-initiated, which is the right starting point. Before autonomy is useful, the workflow has to be boring, predictable, and safe. Sanitation is most of the way there, and the `citizen.yml` format is the interface contract for the autonomous version, even though today it is just configuration for a manually launched agent.
+
+---
+
+## Workflows
+
+Where citizens decide, workflows execute. A workflow is a deterministic graph of stages — shell commands, one-shot LLM calls, human choices — that runs as a Python subprocess. Workflows have no persona. They take inputs, run their stages, and exit. Citizens invoke them. Humans invoke them. Cron, CI, or other workflows invoke them. The workflow does not care who called.
+
+### Why It Is a Separate Concept
+
+The original Sanitation Worker was a single citizen that did everything: gathered context, ran checks, made decisions, executed actions. That worked, but it wasted the citizen's turns on deterministic work. The two-pass split described above — pre-pass enriches findings, citizen decides, executor runs — is the seam where workflows became their own concept.
+
+Citizens are good at judgment, terrible at running thirty `git` commands in a row to gather context. Workflows are good at running thirty `git` commands in a row, terrible at deciding what to do with the output. Splitting the two lets each do what it does best.
+
+### The Runtime
+
+Pickletown's workflows run on [PocketFlow](https://github.com/the-pocket/PocketFlow). The runtime was settled after an evaluation period under `projects/pocketflow-eval/`, which now survives as a project log: ADRs explaining the adoption decision, a CONTEXT.md that nails down vocabulary, and a learnings file capturing what was hard. Forward-looking framework code lives at `workflows/lib/`; new workflows live at `workflows/<name>/`.
+
+Fabro was the prior runtime. It is deprecated and the migration was uneventful enough that the most interesting artifact from it is an ADR explaining why PocketFlow won.
+
+### Anatomy
+
+A workflow lives at `workflows/<name>/`:
+
+```text
+workflows/<name>/
+  bin/<name>            # bash wrapper that boots uv + main.py
+  flow.py               # the graph (nodes and edges)
+  main.py               # entry point: arg parsing, banner, flow.run
+  nodes.py              # Node subclasses for this workflow
+  prompts/              # prompt files for any LLM stages
+  README.md             # what this workflow does and how to run it
+  requirements.txt      # pinned framework dependency
+```
+
+The framework primitives in `workflows/lib/` cover the common stage shapes: `ShellNode` for shell commands, `ClaudeCodeNode` for one-shot `claude -p` calls, `ChoiceNode` for human gates, `EndNode` for terminal stages. A workflow author subclasses these and declares class attributes. The graph in `flow.py` wires nodes together with edge conditions like `succeeded`, `failed`, `partially_succeeded`, and `skipped`.
+
+The bin scripts compute their own pt-root by walking up to find `.beans.yml`, so workflows are location-independent. A workflow that lives at `workflows/<name>/` and one that still lives at `projects/pocketflow-eval/poc/<name>/` invoke the same way.
+
+### What Has Shipped
+
+- **`workflows/sanitation/`** — the executor that runs the sanitation citizen's approved actions. The deterministic half of the two-pass flow described in the Citizens section.
+
+POCs at `projects/pocketflow-eval/poc/` (`pr-review`, `morning-gazette`) keep working at their staging location and will relocate as each is touched. There is no rush; the bin scripts are location-independent, so relocation is a refactor of where the directory sits, not a change to how it runs.
+
+### A Note on Vocabulary
+
+The Town Charter spec uses *workflow* in a different sense: user-flow patterns like [Starting New Work](../../workflows/starting-new-work.md) that show concepts in action. Those are scenarios. Pickletown's workflows are the runtime concept above. Same word, different scope. The spec scenarios describe **what** a person does in the town. Pickletown's workflows describe **how** specific automated work runs.
 
 ---
 
