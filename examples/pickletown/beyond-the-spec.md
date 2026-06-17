@@ -310,9 +310,9 @@ None of this is in the spec, and most of it would not generalize cleanly. It is 
 
 ## Closing
 
-These extensions are not in the Town Charter spec yet. Some may make it in. Citizens and skills are strong candidates: they solve real problems (maintenance automation, workflow capture) and the patterns have stabilized enough to describe generally. The gazette is probably too specific to Pickletown's personality to spec, but the underlying pattern (generated workspace summaries) might generalize.
+These extensions are not in the Town Charter spec yet. Some may make it in. Workflows and skills are the strong candidates, along with the single-procedure-two-runtimes pattern that joins them: they solve real problems (maintenance automation, workflow capture) and the patterns have stabilized enough to describe generally. The citizens experiment is the cautionary tale in the other direction, a runtime that did not earn its keep and got retired. The gazette is probably too specific to Pickletown's personality to spec, but the underlying pattern (generated workspace summaries) might generalize.
 
-The foundation matters here. The spec's seven concepts (workspace, work tracking, projects, AI conventions, session tracking, session continuity, CLI patterns) are what make these experiments possible. Citizens work because the workspace has a consistent structure to operate on. The gazette works because session logs, beans, and git activity are all queryable. Skills work because the AI conventions system gives them a place to live and a way to trigger.
+The foundation matters here. The spec's seven concepts (workspace, work tracking, projects, AI conventions, session tracking, session continuity, CLI patterns) are what make these experiments possible. Workflows work because the workspace has a consistent structure to operate on. The gazette works because session logs, beans, and git activity are all queryable. Skills work because the AI conventions system gives them a place to live and a way to trigger.
 
 That is the point of a good spec: it creates a platform you can build on.
 
