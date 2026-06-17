@@ -100,15 +100,21 @@ workflows/<name>/
   requirements.txt      # pinned framework dependency
 ```
 
-The framework primitives in `workflows/lib/` cover the common stage shapes: `ShellNode` for shell commands, `ClaudeCodeNode` for one-shot `claude -p` calls, `ChoiceNode` for human gates, `EndNode` for terminal stages. A workflow author subclasses these and declares class attributes. The graph in `flow.py` wires nodes together with edge conditions like `succeeded`, `failed`, `partially_succeeded`, and `skipped`.
+The framework primitives in `workflows/lib/` cover the common stage shapes: `ShellNode` for shell commands, `ClaudeCodeNode` for one-shot `claude -p` calls (an agentic Claude Code session), `LLMNode` for a direct single-model completion, `ChoiceNode` for human gates, and `EndNode` for terminal stages. A workflow author subclasses these and declares class attributes. Anything rule-based gets a plain Python `Node`: sanitation's classifier, for instance, is pure Python with no model call at all. When a stage needs data from an external service, `workflows/lib/pt_workflows/mcp_client.py` calls any MCP tool already configured for Claude Code without spinning up a session. The graph in `flow.py` wires nodes together with edge conditions like `succeeded`, `failed`, `partially_succeeded`, and `skipped`.
 
-The bin scripts compute their own pt-root by walking up to find `.beans.yml`, so workflows are location-independent. A workflow that lives at `workflows/<name>/` and one that still lives at `projects/pocketflow-eval/poc/<name>/` invoke the same way.
+The bin scripts compute their own pt-root by walking up to find `.beans.yml`, so workflows are location-independent: a workflow runs the same wherever its directory sits. That made retiring the old `projects/pocketflow-eval/poc/` staging area a matter of moving directories, not rewiring how anything ran.
 
 ### What Has Shipped
 
-- **`workflows/sanitation/`** — the executor that runs the sanitation citizen's approved actions. The deterministic half of the two-pass flow described in the Citizens section.
+The staging area is drained; these all live under `workflows/<name>/` now:
 
-POCs at `projects/pocketflow-eval/poc/` (`pr-review`, `morning-gazette`) keep working at their staging location and will relocate as each is touched. There is no rush; the bin scripts are location-independent, so relocation is a refactor of where the directory sits, not a change to how it runs.
+- **`sanitation/`** runs the maintenance sweep described above (plan → classify → judge → execute → digest → context_map → handoff).
+- **`morning-gazette/`** generates the daily report, the voiced gazette, an annotation pass, and an optional podcast episode, then commits and pushes the edition.
+- **`pr-review/`** drafts a Josh-style review with `claude -p`, gates on an approve/handoff/skip choice, then either posts the review or hands off a resumable session. It is the reference implementation of single-procedure-two-runtimes.
+- **`watch-pr/`** and **`watch-merge/`** are long-lived blocking processes: one follows a PR through CI, reviews, and merge (auto-chaining to the other), the other follows the merged commit through CI-on-main and deploy. The wait lives in a subprocess instead of a held-open session.
+- **`clerk-survey/`** prints a town-wide orientation (active epics, top tags, tracked repos, the latest beans), the surviving piece of the old Clerk citizen.
+
+Each is a graph of the same primitives, varying only in which stages it wires together.
 
 ### A Note on Vocabulary
 
