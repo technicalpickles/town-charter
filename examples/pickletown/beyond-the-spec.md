@@ -1,30 +1,38 @@
 # Beyond the Spec
 
-> Last updated: 2026-05-06. These are experiments built on the spec's foundation. Some have stuck, some are still evolving.
+> Last updated: 2026-06-17. These are experiments built on the spec's foundation. Some have stuck, some are still evolving.
 
 **[Back to the Pickletown companion](README.md)** if you arrived here directly.
 
 <!-- markdownlint-disable MD036 -->
 
-The [Town Charter spec](../../spec.md) defines seven concepts. Pickletown implements all of them, covered in the [main companion](README.md). This document covers what Pickletown has built on top of that foundation: three kinds of automation (citizens, workflows, and skills), a daily newspaper, extended project patterns, and an expanded bean ecosystem.
+The [Town Charter spec](../../spec.md) defines seven concepts. Pickletown implements all of them, covered in the [main companion](README.md). This document covers what Pickletown has built on top of that foundation: two kinds of automation (workflows and skills) and the pattern that composes them, a morning newspaper with its own podcast, a cast of named characters, a web app and a daemon layer that keep the lights on, extended project patterns, and an expanded bean ecosystem.
 
 These are not prescriptions. They are experiments that emerged from daily use. Some are genuinely useful. Some are playful. A few are both.
 
 ---
 
-## Citizens
+## Automation: One Procedure, Two Runtimes
 
-A citizen is one of three kinds of automation Pickletown reaches for, alongside workflows and skills. The split exists because automation needs different things at different moments: judgment about how to handle messy reality (citizen), deterministic execution of a known sequence (workflow), or in-session instructions that shape the current Claude Code conversation (skill). Citizens have a persona and agency. Workflows are subprocesses with neither. Skills load instructions into the current session. Citizens *use* workflows and skills, not the other way around.
+Pickletown reaches for two kinds of automation, and they divide the work cleanly. A **workflow** is a deterministic graph of stages (shell commands, one-shot LLM calls, human choices) that runs as a Python subprocess. It has no persona. It takes inputs, runs its stages, and exits. A **skill** is a procedure loaded into the current Claude Code session: markdown with frontmatter that shapes how the assistant behaves right now. Workflows run *next to* you as subprocesses. Skills run *inside* the session you are already in.
 
-A citizen is an automated agent that can run against the town. The concept: define a role with a name, a description, a scope, and a set of skills, then let it operate. There are a handful of experimental citizens today (Engineer, Clerk, Reporter, Paige Turner, Slab Serif), but only one does real load-bearing work: the Sanitation Worker. It was the first citizen built, and it is where the pattern was shaken out.
+There used to be a third kind. A *citizen* was an automated agent with a name, a persona, a scope, and a toolset: you defined a role, then let it operate. The Sanitation Worker was the first one built and the only one that did load-bearing work. ADR 0004 retired the citizens runtime in May 2026. The reason was plain: every citizen that actually ran did so by running a workflow as its first step and reading the output. The persona-and-toolset shell never used the agency it was supposed to provide. So the runtime went away, the `pt citizen` command was deleted, and the surviving work folded into workflows. Persona and identity come back as a templating concern where they earn their keep (see the Characters section below), not as a runtime.
+
+### Single Procedure, Two Runtimes
+
+Retiring citizens left a real question. Some work needs to run both ways: autonomously on a schedule (gather the facts, emit structured findings) and interactively with a human (judgment calls, redirecting mid-investigation, batch decisions). The answer is the pattern that replaced citizens. One skill defines the procedure once, and both runtimes load it.
+
+The skill is the canonical playbook. Autonomous Claude loads it from a `claude -p` stage inside a workflow. Interactive Claude loads it in a resumed human session. Same Skill tool, same steps. The only adaptation lives inside the skill: each step is labeled **autonomous-safe** (deterministic gather work, structured output) or **interactive-only** (anything that needs a human prompt or an ownership conversation). The autonomous stage does the safe steps and hands off; the human picks up where it left off.
+
+`workflows/pr-review/` proves the shape. Its `ReviewNode` runs the `josh-pr-review` skill autonomously and drafts a review; its `HandoffNode` prints `claude --resume <session-id>` so a human can continue with the same skill already loaded. Sanitation generalizes the idea to a daily driver.
 
 ### Sanitation Worker
 
-The sanitation worker runs maintenance sweeps across the town: cleaning up merged worktrees, triaging beans that have gone quiet, keeping tool repos current with upstream, and flagging workspace health issues. The role is deliberately narrow. It does not write code, answer questions, or weigh in on design. It sweeps, and that is all.
+The Sanitation Worker is the worked example, and the case that drove the whole retirement. It is now a PocketFlow workflow plus a skill, not a citizen. It runs maintenance sweeps across the town: cleaning up merged worktrees, triaging beans that have gone quiet, keeping tool repos current with upstream, and flagging workspace health issues. The role is deliberately narrow. It does not write code, answer questions, or weigh in on design. It sweeps, and that is all.
 
 #### Why It Exists
 
-A working town accumulates cruft. Branches merge but their worktrees hang around. Beans get marked `in-progress`, worked on for an afternoon, and then forgotten when something more interesting shows up. Tool repos drift out of sync with upstream. `main` falls behind. State files pile up in the workspace repo itself. None of this is a crisis on its own, but it compounds. After a month of daily use across ~19 repos, you have a dozen stale worktrees, twenty questionable beans, and a few repos where `main` is two weeks behind.
+A working town accumulates cruft. Branches merge but their worktrees hang around. Beans get marked `in-progress`, worked on for an afternoon, and then forgotten when something more interesting shows up. Tool repos drift out of sync with upstream. `main` falls behind. State files pile up in the workspace repo itself. None of this is a crisis on its own, but it compounds. After months of daily use across ~90 repos, you have a dozen stale worktrees, twenty questionable beans, and a few repos where `main` is two weeks behind.
 
 Any single item takes thirty seconds to handle. The aggregate is the chore nobody gets around to, so the town gets progressively worse to live in. Sanitation exists to make that chore tractable.
 
@@ -40,54 +48,36 @@ The checks cover the kinds of cruft that accumulate in a real town:
 
 Each finding gets a severity tier (`error`, `warning`, `notice`, `ok`) so a scanning human can ignore anything below `warning` on a quick pass.
 
-#### The Two-Pass Workflow
+#### The Pipeline
 
-Early sanitation runs had a problem. The citizen would receive raw findings and then spend thirty tool calls re-investigating each one: which worktree is this, what is its PR status, when did this bean last change. Every answer required running `pt` or `gh` or `git` again, which burned context and made a ten-minute sweep take forty.
+The workflow is a seven-stage graph: `plan → classify → judge → execute → digest → context_map → handoff`. The split is the whole point. Mechanical work runs in deterministic code; judgment runs where an LLM or a human adds value.
 
-The fix was to split the work into two passes:
+1. **Plan** runs the checks and enriches each finding with the context a human would otherwise have to gather (PR status, git log, bean history), writing a JSON action plan. Each action carries an ID, a proposed command, and a finding block with enough context to decide without further investigation.
+2. **Classify** is pure Python, no LLM. Rule-based, it auto-approves the high-confidence, low-risk actions and queues the rest.
+3. **Judge** is an LLM stage that re-decides only the queued actions Classify did not auto-approve.
+4. **Execute** runs the approved commands and reports back.
+5. **Digest** and **Context Map** summarize the run. The digest also feeds the gazette on days when Sal Vage is the writer.
+6. **Handoff** prints `claude --resume <session-id>` so a human can pick up the open triage decisions interactively, with the full context already loaded.
 
-1. **Plan.** A pre-pass runs the checks, enriches each finding with the context the citizen would otherwise have to gather (PR status, git log, bean history), and writes the result as a JSON action plan. Each action has an ID, a proposed command, a confidence level, and a finding block with enough context to make a decision without further investigation.
-2. **Decide and execute.** The citizen reads the plan, writes a single `current-decisions.json` that maps each action ID to `approve`, `reject`, or `skip`, and runs `pt sanitation execute`. The executor runs the approved actions and reports back.
-
-Three tool calls instead of thirty. The interesting work (judgment) is where the citizen spends its turns, and the boring work (gathering context, running commands) happens in deterministic code outside the agent. The decisions file also serves as a lightweight audit trail, since every run leaves a record of what the citizen chose to do and what it passed on.
-
-#### The Definition
-
-Citizens are defined in YAML files under `citizens/<name>/`:
-
-```yaml
-name: Sanitation Worker
-description: Maintains town hygiene, triages stale beans, cleans worktrees
-model: sonnet
-scope:
-  default: town
-  accepts:
-    - town
-skills:
-  - sanitation
-bootstrap:
-  - gather-report.sh
-```
-
-The `bootstrap` step runs before the citizen launches and produces the enriched action plan. The plan becomes the citizen's starting context, so it begins each run fully briefed.
+That last stage is the single-procedure-two-runtimes pattern in action: the same `/sanitation` skill drives both the autonomous stages and the resumed session. The decisions also serve as a lightweight audit trail, since every run leaves a record of what was approved and what was passed on.
 
 #### The Reality
 
-Sanitation is manually invoked. You run `pt citizen sanitation` and it launches a Claude Code session with the pre-computed plan in hand. It is not scheduled, not triggered by events, not autonomous.
+Sanitation is no longer manually invoked. It runs as `workflows/sanitation/bin/sanitation`, and a pitchfork daemon fires it on a six-hour cron (see The Daemon Layer below). Unattended, it drains the deterministic, auto-approved actions and skips the interactive triage. Run with a TTY, it stops at the handoff so a human can decide the rest.
 
-The aspiration is autonomous operation: a citizen that runs on a schedule, files its own beans for problems it finds, and cleans up what it can without asking. The current reality is human-initiated, which is the right starting point. Before autonomy is useful, the workflow has to be boring, predictable, and safe. Sanitation is most of the way there, and the `citizen.yml` format is the interface contract for the autonomous version, even though today it is just configuration for a manually launched agent.
+The old aspiration (a worker that runs on a schedule and cleans up what it can without asking) is now just how it works. Getting there did not need a citizen runtime. It needed the workflow to be boring, predictable, and reversible, which is what makes unattended acting safe.
 
 ---
 
 ## Workflows
 
-Where citizens decide, workflows execute. A workflow is a deterministic graph of stages — shell commands, one-shot LLM calls, human choices — that runs as a Python subprocess. Workflows have no persona. They take inputs, run their stages, and exit. Citizens invoke them. Humans invoke them. Cron, CI, or other workflows invoke them. The workflow does not care who called.
+A workflow is a deterministic graph of stages (shell commands, one-shot LLM calls, human choices) that runs as a Python subprocess. Workflows have no persona. They take inputs, run their stages, and exit. Humans invoke them. Cron, CI, or other workflows invoke them. The workflow does not care who called.
 
 ### Why It Is a Separate Concept
 
-The original Sanitation Worker was a single citizen that did everything: gathered context, ran checks, made decisions, executed actions. That worked, but it wasted the citizen's turns on deterministic work. The two-pass split described above — pre-pass enriches findings, citizen decides, executor runs — is the seam where workflows became their own concept.
+The original Sanitation Worker was a single agent that did everything: gathered context, ran checks, made decisions, executed actions. That worked, but it wasted the agent's turns on deterministic work. Splitting those into typed stages, where pure-Python rules handle the obvious cases and an LLM stage only weighs in on the genuinely ambiguous ones, is the seam where workflows became their own concept.
 
-Citizens are good at judgment, terrible at running thirty `git` commands in a row to gather context. Workflows are good at running thirty `git` commands in a row, terrible at deciding what to do with the output. Splitting the two lets each do what it does best.
+LLM stages are good at judgment, terrible at running thirty `git` commands in a row to gather context. Shell and Python stages are good at running thirty `git` commands in a row, terrible at deciding what to do with the output. A workflow graph lets each kind of stage do what it does best, in one pipeline.
 
 ### The Runtime
 
