@@ -186,7 +186,7 @@ The [main companion's Projects section](README.md#projects) covers the basic lay
 
 ### Scale
 
-Pickletown has 20 active project folders. They range from focused efforts (a single gem upgrade) to sprawling multi-month initiatives (the claudifying-eng project that tracks AI tooling adoption across an engineering org). The town-charter project is a meta-example: this very document was planned and designed in `projects/town-charter/`.
+Pickletown has close to 50 project folders. They range from focused efforts (a single gem upgrade) to sprawling multi-month initiatives (the claudifying-eng project that tracks AI tooling adoption across an engineering org). The town-charter project is a meta-example: this very document was planned and designed in `projects/town-charter/`.
 
 ### Extended Patterns
 
