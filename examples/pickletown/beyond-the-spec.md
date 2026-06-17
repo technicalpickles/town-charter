@@ -180,6 +180,30 @@ Skills defined as markdown files with frontmatter is a Claude Code convention. T
 
 ---
 
+## Characters
+
+Retiring citizens did not retire the personas. They came back as a lighter thing: a cast of named characters that workflows template in when a voice is wanted. A character is a markdown file at `town/characters/<slug>.md` with a role, a voice, and a set of tags. There is no runtime behind them. They are content the gazette and other workflows draw on.
+
+`pt characters` is the front door:
+
+```text
+$ pt characters list
+SLUG                   NAME                   ROLE
+dill-mcbroadcast       Dill McBroadcast       Host, Good Morning, Pickle Town!
+margaret-pennywhistle  Margaret Pennywhistle  Chair, Pickle Town Community Standards Board
+paige-turner           Paige Turner           Editor-in-Chief, The Pickle Town Gazette
+sal-vage               Sal Vage               Sanitation & Salvage Operator, Public Works
+...
+```
+
+The cast runs to seven: Dill McBroadcast (podcast host), Paige Turner (the Gazette's editor-in-chief), Slab Serif (investigative reporter), Margaret Pennywhistle (community-standards chair), Sal Vage (sanitation operator), Birdie Byline (summer intern), and Gerald (long-time resident and frequent podcast guest).
+
+Tags decide where a character can show up. `gazette-writer` and `gazette-annotator` gate the daily byline rotation; `podcast-host` and `podcast-guest` gate the audio. The morning-gazette workflow discovers eligible characters by tag, so adding a persona to a rotation is a new file plus a tag, no code change.
+
+`pt characters` also runs a portrait pipeline. `pt characters portrait prompt <slug>` assembles an image-generation prompt from the character file, `portrait apply <slug> <path>` processes and installs the resulting PNG, and `portrait list` shows portrait status across the cast. The portraits appear beside bylines in the web app.
+
+---
+
 ## Projects as Epicenters
 
 The [main companion's Projects section](README.md#projects) covers the basic layout: `projects/<name>/` with subdirectories for plans, design, brainstorming, and handoffs. In practice, projects have grown into something more central than that minimal structure suggests.
