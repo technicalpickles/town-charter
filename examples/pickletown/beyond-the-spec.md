@@ -124,31 +124,31 @@ The Town Charter spec uses *workflow* in a different sense: user-flow patterns l
 
 ## The Daily Gazette
 
-The Pickle Town Gazette is a daily summary of workspace state, formatted as a small-town newspaper. Active beans, recent commits, PR status, worktree health, all presented with headlines, bylines, and the occasional editorial flourish.
+The Pickle Town Gazette is a daily summary of workspace state, formatted as a small-town newspaper. Active beans, recent commits, PR status, worktree health, all presented with headlines, bylines, and the occasional editorial flourish. What began as a hand-run skill is now the `morning-gazette` workflow: a multi-stage PocketFlow graph that gathers the data, drafts the edition in a character's voice, optionally cuts a podcast, and commits the result.
 
-### What It Looks Like
+### The Pipeline
 
-Each edition covers:
+The stages chain like this:
 
-- **Active work.** Beans in progress, recently completed items, stale items that need attention.
-- **Repository activity.** Recent commits and PRs across tracked repos.
-- **Community standards.** Workspace health metrics, convention adherence, outstanding reviews.
+`collect → pick_writer → report → editorialize → pick_annotator → annotate → gate → (write_script → tts → publish) → commit`
 
-The format is playful (headlines like "OVERTIME FIX LANDS IN PRODUCTION" with a reporter byline) but the content is genuinely useful for daily orientation. Reading the gazette in the morning tells you where you left off, what landed overnight, and what needs attention.
+- **Collect** runs a shell script that gathers the window's session log, bean status, and git activity across repos.
+- **Pick Writer** rotates the day's byline against the previous edition, drawing from the characters tagged `gazette-writer`.
+- **Report** formats the raw data; **Editorialize** rewrites it in the chosen writer's voice.
+- **Pick Annotator** and **Annotate** add a second pass: a different character (tagged `gazette-annotator`) writes a companion document and drops footnotes into the edition. When Margaret Pennywhistle draws the assignment, that companion is the community-standards review (`docs/daily-gazette/YYYY-MM-DD-pickle-town-gazette-community-standards-review.md`), a recurring critique of workspace health and convention adherence.
+- **Gate** is the one human choice: cut a podcast or not (default yes; an unattended run passes `--podcast` or `--no-podcast` to skip the prompt).
+- **Write Script → TTS → Publish** generate a dialogue script, render it to audio with `podcast-tts.mjs`, and write show notes. Dill McBroadcast hosts; the day's annotator is the guest.
+- **Commit** is terminal on both branches. It stages today's artifacts, commits, and pushes, so the web app's gazette and podcast pages pick up the new edition without anyone running git by hand. The push is best-effort: a git hiccup is surfaced loudly but never loses a gazette already written to disk.
 
-### The Podcast
+### Writers and Voice
 
-Some gazette editions include a podcast episode. The script is generated from the gazette content, then converted to audio using AI text-to-speech. The result is a short audio briefing you can listen to while making coffee.
+The bylines are characters, not code. Writers and annotators live as persona files under `town/characters/`, discovered by tag, so adding a voice to the rotation needs no code change. The format stays playful (headlines like "OVERTIME FIX LANDS IN PRODUCTION") while the content stays genuinely useful for daily orientation. On days Sal Vage writes, the edition themes itself as a salvage log and pulls from the sanitation digest.
 
-The podcast production workflow involves the `/daily-gazette` skill for the gazette itself, then the `/podcast` skill for script generation and audio preparation.
+### History and Procedure
 
-### History
+The gazette has been running since February 4, 2026. Editions land in `docs/daily-gazette/` with date-prefixed filenames; podcast scripts, audio, and show notes sit under `docs/daily-gazette/podcast/`. The archive is versioned in the workspace repo, so you can look back at any day's edition.
 
-The gazette has been running since February 4, 2026. It generates to `docs/daily-gazette/` with date-prefixed filenames. Podcast episodes and scripts live in `docs/daily-gazette/podcast/`. The archive is versioned in the workspace repo, so you can look back at any day's edition.
-
-### Generation
-
-The `/daily-gazette` skill orchestrates the whole process. It gathers workspace state (session log, bean status, git activity across repos), generates the gazette content, and writes the output files. The skill is invoked manually, usually first thing in the morning.
+The `/daily-gazette` skill is still the canonical playbook for what an edition should contain and how it should read. The workflow runs that procedure autonomously; a human can load the same skill in a session for a one-off. Single procedure, two runtimes again.
 
 ---
 
