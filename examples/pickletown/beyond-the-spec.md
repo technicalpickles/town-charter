@@ -154,7 +154,7 @@ The `/daily-gazette` skill is still the canonical playbook for what an edition s
 
 ## Skills
 
-Skills are reusable workflows packaged as invocable commands. In Claude Code, they appear as slash commands: `/sanitation`, `/daily-gazette`, `/commit`, `/park`.
+Skills are a [Claude Code](https://code.claude.com/docs/en/skills) feature. A skill is a folder with a `SKILL.md` (a name, a description, and instructions) that Claude loads on demand and invokes as a slash command: `/sanitation`, `/daily-gazette`, `/commit`, `/park`. The format is the open [Agent Skills](https://agentskills.io) standard, released by Anthropic and now adopted across a wide range of agent tools, so the same skill is portable beyond Claude Code. Pickletown brings the library, not the mechanism.
 
 ### The Pattern
 
@@ -176,7 +176,7 @@ Pickletown has skills in its `.claude/skills/` directory covering:
 
 Skills are part of a plugin system called superpowers. Plugins bundle related skills together and can be shared across towns. A plugin installed in one workspace makes its skills available there. This means a team could share a set of workflow skills without each person reimplementing them.
 
-Skills defined as markdown files with frontmatter is a Claude Code convention. The superpowers layer adds packaging, distribution, and the ability to compose skills from multiple plugins.
+The `SKILL.md` format is the open Agent Skills standard. Superpowers sits on top of it, adding packaging, distribution, and the ability to compose skills from multiple plugins across towns.
 
 ---
 
