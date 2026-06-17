@@ -204,6 +204,25 @@ Tags decide where a character can show up. `gazette-writer` and `gazette-annotat
 
 ---
 
+## The Web App and the Daemon Layer
+
+Underneath the one-shot workflows sits a small persistent layer: a web app for reading what the town produces, and a daemon manager that keeps it (and the scheduled sweeps) running.
+
+### The Web App
+
+`pt serve` boots a Sinatra app on Puma at port 9876. It is a local reading room for everything the town produces: a hud view of active work, a beans browser, rendered gazette editions, a podcast player, project and repo directories, and the character portraits. The views are thin; the data comes from small API modules under `web/lib/` (`beans_api.rb`, `gazette_api.rb`, `podcast_api.rb`, and so on) that read the same files the CLI and workflows write. Nothing in the web app is authoritative. It is a window onto the workspace, which is why the morning-gazette workflow pushes each edition: the web app picks it up on the next request.
+
+### The Daemon Layer
+
+`pt serve` can run by hand, but the durable setup is pitchfork, a local daemon manager. Two daemons matter here:
+
+- **`pt-serve`** keeps the web app up and hot-reloads it when files under `web/` change.
+- **`sanitation-sweep`** fires `workflows/sanitation/bin/sanitation` on a six-hour cron. Unattended, it drains the auto-approved actions and skips the interactive triage. If its cloud credentials have expired it downgrades gracefully (skips the LLM judge, still cleans deterministically) rather than failing.
+
+This is the managed layer above the one-shot subprocesses. Workflows run and exit; the daemon layer is the handful of things that need to stay up or fire on a schedule. The sanitation sweep is where the [autonomy spectrum](../../autonomy-spectrum.md) actually advanced: it is the same workflow a human runs interactively, just pointed at a cron with the interactive steps switched off.
+
+---
+
 ## Projects as Epicenters
 
 The [main companion's Projects section](README.md#projects) covers the basic layout: `projects/<name>/` with subdirectories for plans, design, brainstorming, and handoffs. In practice, projects have grown into something more central than that minimal structure suggests.
