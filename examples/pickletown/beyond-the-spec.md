@@ -295,6 +295,19 @@ The `--ready` flag turns the bean list from an inventory into a work queue. Comb
 
 ---
 
+## The Expanded CLI
+
+The spec's CLI Patterns concept is about a single front door to the workspace. Pickletown's `pt` has grown well past the basics into roughly two dozen commands, and a few families are worth naming because they map onto everything above:
+
+- **`pt serve`** runs the web app; **`pt characters`** manages the persona gallery and its portraits.
+- **`pt crew`** spawns, watches, attaches to, and tears down focused field crews: an interactive Claude session scoped to one bean and one job site, for bounded work that should not silt up the main session.
+- **`pt sessions`** and **`pt handoffs`** track past Claude sessions and the handoff notes that resume them, the connective tissue behind session continuity.
+- **`pt search`** runs semantic search across the town's content and tracked repos; **`pt sup`** prints a morning dashboard; **`pt sync`** decides what to commit, skip, or gitignore on a sweep; **`pt plugin sync`** keeps installed skill plugins current.
+
+None of this is in the spec, and most of it would not generalize cleanly. It is here because a workspace you live in every day grows a CLI shaped like its owner's habits. That is the CLI Patterns concept working as intended, not drifting from it.
+
+---
+
 ## Closing
 
 These extensions are not in the Town Charter spec yet. Some may make it in. Citizens and skills are strong candidates: they solve real problems (maintenance automation, workflow capture) and the patterns have stabilized enough to describe generally. The gazette is probably too specific to Pickletown's personality to spec, but the underlying pattern (generated workspace summaries) might generalize.
