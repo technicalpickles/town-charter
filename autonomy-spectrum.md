@@ -33,3 +33,5 @@ Pickletown started at stage 5 (single human-directed CLI agent) and has grown to
 Town Charter captures what works across stages 4-8. The concepts are the same whether you have one agent or twenty. What changes is how much automation wraps around them: session tracking can be a manual note or an automated event log, work tracking can be human-managed or agent-triaged, handoffs can be written by hand or generated as a session's last act.
 
 The spec does not prescribe where you should be on this spectrum. It gives you the building blocks that work wherever you are.
+
+From stage 6 onward, where you are running several agents at once, the question becomes how a coordinating session hands work out without losing its own view. The [Routing & Delegation](concepts/routing-and-delegation.md) concept describes that mechanic: routing bounded work to isolated execution contexts and keeping the wide view clean.
