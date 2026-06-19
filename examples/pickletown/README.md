@@ -19,6 +19,7 @@ This document maps each spec concept to its Pickletown implementation: the direc
 - [Session Tracking](#session-tracking)
 - [Session Continuity](#session-continuity)
 - [CLI Patterns](#cli-patterns)
+- [Routing & Delegation](#routing--delegation)
 
 **In Action**
 
@@ -335,9 +336,49 @@ All workflow commands accept flexible refs. A bean ID (`gt-pw2k`), a short ID (`
 
 ---
 
+## Routing & Delegation
+
+> The spec's [Routing & Delegation](../../concepts/routing-and-delegation.md) concept: a coordinating session with the wide view routes bounded work to isolated execution contexts instead of doing it in place, across an in-process / local / remote spectrum.
+
+Pickletown's coordinating session runs as **Dispatch** (the persona is Patch Callahan, who works the downtown desk with the wide view). A `dispatcher` skill is the routing rule: when a request arrives, Dispatch decides whether to handle it inline (it needs the cross-project view), survey it first (the shape is unclear), or hand it to a crew (it is bounded fieldwork in one repo). The point is to keep the downtown session from silting up with the detail of one repo's work.
+
+The three execution modes map straight onto the spec's spectrum.
+
+### In-process: survey crews
+
+For research and recon, Dispatch fans out **survey crews**: subagents inside the same session, spawned through Claude Code's [Agent and Explore tools](https://code.claude.com/docs/en/sub-agents). They sweep the codebase or the workspace, read what they need, and report findings back into Dispatch's context. They are read-only and short-lived. This is how an unclear request gets its shape before anything is delegated for real.
+
+### Local isolated: field crews
+
+For bounded fieldwork, Dispatch spawns a **field crew** with `pt crew`: a separate Claude session, scoped to one bean and one job site (worktree), running under a lean [`cenv`](https://github.com/technicalpickles/cenv) environment so its plugin and config surface is minimal. Because it is a separate session in its own working area, it can edit, build, and iterate without touching Dispatch's view. `pt crew` spawns, watches, attaches to, and tears down these crews.
+
+### Remote: cloud crews
+
+For work that should proceed unwatched, Dispatch dispatches a **cloud crew** with `/wish` (the Wishing Well cloud agent). It is fire-and-forget: the work runs elsewhere and Dispatch reviews the result later rather than supervising it. This is the most isolated, least supervised mode.
+
+### The work order
+
+The handoff artifact is a **work order**, a durable markdown file under `projects/dispatcher/work-orders/`. It carries the absolute path to the job site and a verification command, alongside the scope and intent. That path-plus-verification contract is what lets a crew land ready and lets Dispatch confirm the result instead of taking the crew's word for it.
+
+### What Works Well
+
+**The downtown session stays clean.** Routing bounded work to crews is what keeps the coordinating session able to hold the wide view across ~19 repos. The win is context economy, exactly as the concept frames it; the parallelism is a bonus.
+
+**Survey-first picks the right mode.** Cheap in-process recon before delegating means Dispatch rarely hands a job to the wrong kind of crew. The shape of the work is known before a heavier local or remote crew spins up.
+
+### What is Rough
+
+**The routing discipline is convention, not tooling.** Dispatch follows the `dispatcher` skill, but nothing enforces "don't grab a shovel." A session can still dive into fieldwork it should have delegated. The guard is the skill and the habit, not a hard rule.
+
+**Work-order quality is manual.** A handoff is only as good as what Dispatch writes into it. A work order missing a real job-site path or a verification command produces a crew that lands lost or work nobody can confirm, which is the concept's named failure mode in practice.
+
+**Remote crews have thin visibility.** Fire-and-forget cloud crews proceed without supervision, which is the point, but it also means a stuck or wrong remote crew is not noticed until you go looking. Local crews you can attach to; remote crews you mostly wait on.
+
+---
+
 ## Workflow Narrative
 
-The seven concepts above are building blocks. This section shows how they compose over the course of a real day.
+The concepts above are building blocks. This section shows how they compose over the course of a real day.
 
 ### Starting new work
 

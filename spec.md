@@ -56,6 +56,8 @@ Each extension has its dependencies noted.
 
 - **[CLI Patterns](concepts/cli.md)** (depends on: Workspace, Work Tracking): The town benefits from a CLI that operates on work units as a whole. Covers why a CLI exists (determinism, efficiency, single-entrypoint operations) without prescribing specific commands or syntax.
 
+- **[Routing & Delegation](concepts/routing-and-delegation.md)** (depends on: Work Tracking, Workspace): A coordinating session with the wide view routes bounded work to isolated execution contexts instead of doing it in place. Covers the delegation spectrum (in-process, local isolated, remote) and the self-sufficient handoff that makes a delegation reproducible. The lived mechanic behind the upper stages of the [autonomy spectrum](autonomy-spectrum.md).
+
 ---
 
 ## Workflows
@@ -98,7 +100,7 @@ If you are building a town from scratch, start with the Workspace concept and th
 
 ## Examples
 
-[Pickletown](examples/pickletown/README.md) is a working town that has been in active use since early 2026. It implements all seven concepts using beans for work tracking, a custom CLI (`pt`), and Claude Code for AI assistance. The companion document maps each concept to its concrete implementation.
+[Pickletown](examples/pickletown/README.md) is a working town that has been in active use since early 2026. It implements every concept using beans for work tracking, a custom CLI (`pt`), and Claude Code for AI assistance. The companion document maps each concept to its concrete implementation.
 
 For extensions that go beyond this spec (automated agents, generated summaries, reusable skill workflows), see [Beyond the Spec](examples/pickletown/beyond-the-spec.md).
 
