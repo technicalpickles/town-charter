@@ -346,11 +346,11 @@ The three execution modes map straight onto the spec's spectrum.
 
 ### In-process: survey crews
 
-For research and recon, Dispatch fans out **survey crews**: subagents inside the same session, spawned through the Agent and Explore tools. They sweep the codebase or the workspace, read what they need, and report findings back into Dispatch's context. They are read-only and short-lived. This is how an unclear request gets its shape before anything is delegated for real.
+For research and recon, Dispatch fans out **survey crews**: subagents inside the same session, spawned through Claude Code's [Agent and Explore tools](https://code.claude.com/docs/en/sub-agents). They sweep the codebase or the workspace, read what they need, and report findings back into Dispatch's context. They are read-only and short-lived. This is how an unclear request gets its shape before anything is delegated for real.
 
 ### Local isolated: field crews
 
-For bounded fieldwork, Dispatch spawns a **field crew** with `pt crew`: a separate Claude session, scoped to one bean and one job site (worktree), running under a lean `cenv` environment so its plugin and config surface is minimal. Because it is a separate session in its own working area, it can edit, build, and iterate without touching Dispatch's view. `pt crew` spawns, watches, attaches to, and tears down these crews.
+For bounded fieldwork, Dispatch spawns a **field crew** with `pt crew`: a separate Claude session, scoped to one bean and one job site (worktree), running under a lean [`cenv`](https://github.com/technicalpickles/cenv) environment so its plugin and config surface is minimal. Because it is a separate session in its own working area, it can edit, build, and iterate without touching Dispatch's view. `pt crew` spawns, watches, attaches to, and tears down these crews.
 
 ### Remote: cloud crews
 
