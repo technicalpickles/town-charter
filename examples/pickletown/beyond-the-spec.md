@@ -1,12 +1,12 @@
 # Beyond the Spec
 
-> Last updated: 2026-06-17. These are experiments built on the spec's foundation. Some have stuck, some are still evolving.
+> Last updated: 2026-09-18. These are experiments built on the spec's foundation. Some have stuck, some are still evolving.
 
 **[Back to the Pickletown companion](README.md)** if you arrived here directly.
 
 <!-- markdownlint-disable MD036 -->
 
-The [Town Charter spec](../../spec.md) defines seven concepts. Pickletown implements all of them, covered in the [main companion](README.md). This document covers what Pickletown has built on top of that foundation: two kinds of automation (workflows and skills) and the pattern that composes them, a morning newspaper with its own podcast, a cast of named characters, a web app and a daemon layer that keep the lights on, extended project patterns, and an expanded bean ecosystem.
+The [Town Charter spec](../../spec.md) defines eight concepts. Pickletown implements all of them, covered in the [main companion](README.md). This document covers what Pickletown has built on top of that foundation: two kinds of automation (workflows and skills) and the pattern that composes them, a morning newspaper with its own podcast, a cast of named characters, a web app and a daemon layer that keep the lights on, a convention for state that churns, extended project patterns, and an expanded bean ecosystem.
 
 These are not prescriptions. They are experiments that emerged from daily use. Some are genuinely useful. Some are playful. A few are both.
 
@@ -32,7 +32,7 @@ The Sanitation Worker is the worked example, and the case that drove the whole r
 
 #### Why It Exists
 
-A working town accumulates cruft. Branches merge but their worktrees hang around. Beans get marked `in-progress`, worked on for an afternoon, and then forgotten when something more interesting shows up. Tool repos drift out of sync with upstream. `main` falls behind. State files pile up in the workspace repo itself. None of this is a crisis on its own, but it compounds. After months of daily use across ~90 repos, you have a dozen stale worktrees, twenty questionable beans, and a few repos where `main` is two weeks behind.
+A working town accumulates cruft. Branches merge but their worktrees hang around. Beans get marked `in-progress`, worked on for an afternoon, and then forgotten when something more interesting shows up. Tool repos drift out of sync with upstream. `main` falls behind. State files pile up in the workspace repo itself. None of this is a crisis on its own, but it compounds. After months of daily use across ~120 repos, you have a dozen stale worktrees, twenty questionable beans, and a few repos where `main` is two weeks behind.
 
 Any single item takes thirty seconds to handle. The aggregate is the chore nobody gets around to, so the town gets progressively worse to live in. Sanitation exists to make that chore tractable.
 
@@ -63,7 +63,7 @@ That last stage is the single-procedure-two-runtimes pattern in action: the same
 
 #### The Reality
 
-Sanitation is no longer manually invoked. It runs as `workflows/sanitation/bin/sanitation`, and a pitchfork daemon fires it on a six-hour cron (see The Daemon Layer below). Unattended, it drains the deterministic, auto-approved actions and skips the interactive triage. Run with a TTY, it stops at the handoff so a human can decide the rest.
+Sanitation is no longer manually invoked. It runs as `workflows/sanitation/bin/sanitation --cron`, fired by a [launchd][launchd] agent four times a day (see The Daemon Layer below). Unattended, it drains the deterministic, auto-approved actions and skips the interactive triage. Run with a TTY, it stops at the handoff so a human can decide the rest. The pending queue is also browsable: `pt sanitation review --open` loads it in the web app's salvage-yard page, and `pt sanitation work` drains it through a Claude session with the `/sanitation` skill loaded.
 
 The old aspiration (a worker that runs on a schedule and cleans up what it can without asking) is now just how it works. Getting there did not need a citizen runtime. It needed the workflow to be boring, predictable, and reversible, which is what makes unattended acting safe.
 
@@ -113,8 +113,10 @@ The staging area is drained; these all live under `workflows/<name>/` now:
 - **`pr-review/`** drafts a Josh-style review with `claude -p`, gates on an approve/handoff/skip choice, then either posts the review or hands off a resumable session. It is the reference implementation of single-procedure-two-runtimes.
 - **`watch-pr/`** and **`watch-merge/`** are long-lived blocking processes: one follows a PR through CI, reviews, and merge (auto-chaining to the other), the other follows the merged commit through CI-on-main and deploy. The wait lives in a subprocess instead of a held-open session.
 - **`clerk-survey/`** prints a town-wide orientation (active epics, top tags, tracked repos, the latest beans), the surviving piece of the old Clerk citizen.
+- **`weekly-review/`** (August 2026) builds a verified Monday-morning recap (timeline plus open threads) from beans, handoffs, and session history, and publishes it to a private Notion page. It is the first workflow whose output leaves the workspace.
+- **`meeting-reality-check/`** (September 2026) syncs new Notion AI meeting notes and judges each one against the beans and projects it might affect, logging decisions that changed something you were tracking and related work you weren't.
 
-Each is a graph of the same primitives, varying only in which stages it wires together.
+Each is a graph of the same primitives, varying only in which stages it wires together. The last two are also the second and third members of a *reality-check* family: a workflow does the deterministic gather, then hands one artifact at a time to a skill that carries a disposition table and worked examples. The skill is the judgment; the workflow is the conveyor.
 
 ### A Note on Vocabulary
 
@@ -164,19 +166,19 @@ The pattern is: notice a workflow you repeat, capture it as a skill, invoke it d
 
 ### Pickletown's Skill Library
 
-Pickletown has skills in its `.claude/skills/` directory covering:
+The town's own skills ship as a Claude Code plugin named `pickletown`, from a marketplace that lives inside the workspace repo (`plugin/`). Twenty-three skills as of September 2026, in a few groups:
 
-- **Workflow automation.** Commits, code review, PR creation, CI debugging.
-- **Town operations.** Sanitation, gazette generation, podcast production.
-- **Context management.** Parking and unparking sessions, snapshots, handoffs.
-- **Development patterns.** Brainstorming, plan writing, plan execution, TDD, systematic debugging.
-- **External integrations.** Slack, Jira, Google Calendar, Obsidian.
+- **Town operations.** `pt-repos`, `pt-work-units`, `beans`, `pt-sync`, `sanitation`, `daily-gazette`, `character`, `dispatcher`, `checking-pr-status`, `catching-up`.
+- **Judgment layers.** `bean-reality-check`, `worktree-reality-check`, `project-reality-check`, `meeting-reality-check`: the disposition tables that sanitation and the reality-check workflows delegate decisions to.
+- **Work-specific.** PR review in the author's voice, GitHub notification triage, Jira sprint planning, and a few repo-specific migration playbooks.
 
-### Superpowers
+Alongside the plugin, a handful of town-root-only procedures sit in `.claude/skills/` (diagnosing sandbox git failures, recovering the root from branch drift, writing pickletown notes for a repo). The general-purpose skills (brainstorming, planning, TDD, debugging, git, Slack, Jira, calendar) come from other plugins.
 
-Skills are part of a plugin system called superpowers. Plugins bundle related skills together and can be shared across towns. A plugin installed in one workspace makes its skills available there. This means a team could share a set of workflow skills without each person reimplementing them.
+### Plugins
 
-The `SKILL.md` format is the open Agent Skills standard. Superpowers sits on top of it, adding packaging, distribution, and the ability to compose skills from multiple plugins across towns.
+Skills travel as Claude Code plugins: a directory with a `.claude-plugin/plugin.json`, its skills, hooks, and agents, published through a marketplace. Pickletown uses three: its own `pickletown` plugin (the marketplace is the workspace repo itself, `source: "./"`), [pickled-claude-plugins](https://github.com/technicalpickles/pickled-claude-plugins) (the author's shareable set: git workflows, dev tools, tool routing, session park/unpark), and [superpowers](https://github.com/obra/superpowers) (brainstorming, planning, TDD, debugging). A team could share a set of workflow skills without each person reimplementing them, and that is how the shareable set came to exist.
+
+The cost of the plugin form is the cache. Claude Code copies a plugin at install time and refreshes only on a version bump, so an edit to a skill in the workspace repo is invisible until `pt plugin sync` mirrors it into the cache. Repo-local skills under `.claude/skills/` reload live. Pickletown keeps both and knows which is which.
 
 ---
 
@@ -210,16 +212,33 @@ Underneath the one-shot workflows sits a small persistent layer: a web app for r
 
 ### The Web App
 
-`pt serve` boots a Sinatra app on Puma at port 9876. It is a local reading room for everything the town produces: a hud view of active work, a beans browser, rendered gazette editions, a podcast player, project and repo directories, and the character portraits. The views are thin; the data comes from small API modules under `web/lib/` (`beans_api.rb`, `gazette_api.rb`, `podcast_api.rb`, and so on) that read the same files the CLI and workflows write. Nothing in the web app is authoritative. It is a window onto the workspace, which is why the morning-gazette workflow pushes each edition: the web app picks it up on the next request.
+`pt serve` boots a [Sinatra][sinatra] app on [Puma][puma] at port 9876. It is a local reading room for everything the town produces: a hud view of active work, a beans browser, rendered gazette editions, a podcast player, project and repo directories, session history, workflow graphs, the sanitation review queue (the salvage yard), a GitHub-notification triage board, and the character portraits. The views are thin; the data comes from small API modules under `web/lib/` (`beans_api.rb`, `gazette_api.rb`, `sanitation_api.rb`, and so on) that read the same files the CLI and workflows write. Nothing in the web app is authoritative. It is a window onto the workspace, which is why the morning-gazette workflow pushes each edition: the web app picks it up on the next request.
+
+The same process is also the town's MCP server (`/mcp`). It exposes the four repo-writing operations (`track_repo`, `untrack_repo`, `create_worktree`, `new_repo`) so a Claude Code session can perform them outside the Bash sandbox, and it invokes the same Ruby command classes the CLI does. Read-only pt commands stay on the shell.
 
 ### The Daemon Layer
 
-`pt serve` can run by hand, but the durable setup is pitchfork, a local daemon manager. Two daemons matter here:
+`pt serve` can run by hand, but the durable setup splits into two layers.
 
-- **`pt-serve`** keeps the web app up and hot-reloads it when files under `web/` change.
-- **`sanitation-sweep`** fires `workflows/sanitation/bin/sanitation` on a six-hour cron. Unattended, it drains the auto-approved actions and skips the interactive triage. If its cloud credentials have expired it downgrades gracefully (skips the LLM judge, still cleans deterministically) rather than failing.
+**Resident processes** are supervised by [pitchfork](https://github.com/endevco/pitchfork), a local daemon manager: `pt-serve` (the web app and MCP server, started at login, hot-reloaded when files under `web/` change), a headless browser for agent-driven web work, and a self-hosted profiler UI. A Dolt SQL server for the session store is the one resident process managed by [launchd][launchd] instead, because every session's start hook depends on it and it should not be tied to the dev-loop tooling.
 
-This is the managed layer above the one-shot subprocesses. Workflows run and exit; the daemon layer is the handful of things that need to stay up or fire on a schedule. The sanitation sweep is where the [autonomy spectrum](../../autonomy-spectrum.md) actually advanced: it is the same workflow a human runs interactively, just pointed at a cron with the interactive steps switched off.
+**Scheduled jobs** are macOS [launchd][launchd] agents, six as of September 2026: the sanitation sweep (four times a day), the morning gazette (07:30), the weekly review (Monday 08:15), the PR watch-register poller (every fifteen minutes), a GitHub-notification triage sweep (08:00), and the Dolt server above. Each plist lives next to the thing it runs (`workflows/<name>/launchd/`, `projects/<name>/launchd/`) and is symlinked into `~/Library/LaunchAgents`. Sanitation started life as a pitchfork cron daemon and moved to [launchd][launchd] after a scheduling bug (a project-scoped cron daemon that never registered and so never fired) proved hard to see; [launchd][launchd] is dumber and that is the point.
+
+This is the managed layer above the one-shot subprocesses. Workflows run and exit; the daemon layer is the handful of things that need to stay up or fire on a schedule. The sanitation sweep is where the [autonomy spectrum](../../autonomy-spectrum.md) actually advanced: it is the same workflow a human runs interactively, just pointed at a schedule with the interactive steps switched off. If its cloud credentials have expired it downgrades gracefully (skips the LLM judge, still cleans deterministically) rather than failing.
+
+---
+
+## State That Churns
+
+A town accumulates state that changes constantly: per-run workflow output, session logs, the PR watch register, sanitation's pending queue. Committing it to the workspace repo makes `git status` permanently noisy in a working tree that every concurrent session shares; not versioning it loses the history. Pickletown settled on three rules, which the spec's [Workspace](../../concepts/workspace.md#design-considerations) concept now states generally.
+
+**Transient versus durable, per workflow.** Each workflow owns `workflows/<name>/state/`. Files regenerated every run (`current-*.json`, per-run telemetry, indexes) are gitignored. `state/memory/` is durable across runs and tracked. The distinction is made once, in `.gitignore`, and every workflow follows it.
+
+**A commit-safety classifier.** `PathTier` sorts any path in the workspace repo into `content` (beans, docs, projects, characters, per-workflow state: safe to commit unattended), `code` (pt's own source: hold for a human), or `never` (tracked repos: not the workspace's to commit). Every autonomous commit path, from the sanitation sweep to `pt sync`, buckets its changes through it. Unrecognized paths fall to `code`, so the failure mode is "a human has to look" rather than "something got committed that shouldn't have".
+
+**A side store for the high-churn rows.** Session starts and PR watch state moved out of tracked files into Dolt databases under `~/.local/state/pickletown/`. Dolt gives them commit, diff, and log without touching the workspace repo's history. The CLI commands that read and write them did not change.
+
+The cost is a fourth place to look. A session grounding itself in the town has to know that `git log` shows the durable half and `dolt log` shows the churning half, and that the web app reads both.
 
 ---
 
@@ -299,10 +318,11 @@ The `--ready` flag turns the bean list from an inventory into a work queue. Comb
 
 The spec's CLI Patterns concept is about a single front door to the workspace. Pickletown's `pt` has grown well past the basics into roughly two dozen commands, and a few families are worth naming because they map onto everything above:
 
-- **`pt serve`** runs the web app; **`pt characters`** manages the persona gallery and its portraits.
-- **`pt crew`** spawns, watches, attaches to, and tears down focused field crews: an interactive Claude session scoped to one bean and one job site, for bounded work that should not silt up the main session.
-- **`pt sessions`** and **`pt handoffs`** track past Claude sessions and the handoff notes that resume them, the connective tissue behind session continuity.
-- **`pt search`** runs semantic search across the town's content and tracked repos; **`pt sup`** prints a morning dashboard; **`pt sync`** decides what to commit, skip, or gitignore on a sweep; **`pt plugin sync`** keeps installed skill plugins current.
+- **`pt serve`** runs the web app and MCP server; **`pt characters`** manages the persona gallery and its portraits.
+- **`pt crew`** spawns, watches, attaches to, and tears down focused field crews: a Claude session (interactive or headless) scoped to one bean and one job site, for bounded work that should not silt up the main session.
+- **`pt sessions`** and **`pt handoffs`** track past Claude sessions and the handoff notes that resume them, the connective tissue behind session continuity. **`pt workspaces`** turns every repo and project into a [tmux][tmux] session you can jump between.
+- **`pt watch`** is the PR watch register: the author's own open PRs, each with one recommended next action, kept fresh by a [launchd][launchd] poller. Skills and an unpark hook read it before asserting a PR's state.
+- **`pt search`** runs semantic search across the town's content and tracked repos; **`pt sup`** prints a morning dashboard; **`pt sync`** decides what to commit, skip, or gitignore on a sweep; **`pt plugin sync`** mirrors the town's own plugin into Claude Code's cache; **`pt init`** scaffolds a new town for someone else.
 
 None of this is in the spec, and most of it would not generalize cleanly. It is here because a workspace you live in every day grows a CLI shaped like its owner's habits. That is the CLI Patterns concept working as intended, not drifting from it.
 
@@ -312,8 +332,13 @@ None of this is in the spec, and most of it would not generalize cleanly. It is 
 
 These extensions are not in the Town Charter spec yet. Some may make it in. Workflows and skills are the strong candidates, along with the single-procedure-two-runtimes pattern that joins them: they solve real problems (maintenance automation, workflow capture) and the patterns have stabilized enough to describe generally. The citizens experiment is the cautionary tale in the other direction, a runtime that did not earn its keep and got retired. The gazette is probably too specific to Pickletown's personality to spec, but the underlying pattern (generated workspace summaries) might generalize.
 
-The foundation matters here. The spec's seven concepts (workspace, work tracking, projects, AI conventions, session tracking, session continuity, CLI patterns) are what make these experiments possible. Workflows work because the workspace has a consistent structure to operate on. The gazette works because session logs, beans, and git activity are all queryable. Skills work because the AI conventions system gives them a place to live and a way to trigger.
+The foundation matters here. The spec's eight concepts (workspace, work tracking, projects, AI conventions, session tracking, session continuity, CLI patterns, routing and delegation) are what make these experiments possible. Workflows work because the workspace has a consistent structure to operate on. The gazette works because session logs, beans, and git activity are all queryable. Skills work because the AI conventions system gives them a place to live and a way to trigger.
 
 That is the point of a good spec: it creates a platform you can build on.
+
+[sinatra]: https://sinatrarb.com/
+[puma]: https://puma.io/
+[launchd]: https://www.launchd.info/
+[tmux]: https://github.com/tmux/tmux
 
 <!-- markdownlint-enable MD036 -->

@@ -10,7 +10,7 @@ A town is a git repo that organizes multiple external repositories, tracks work 
 
 ## What does that look like?
 
-[Pickletown](examples/pickletown/README.md) is a working town that has been in daily use since early 2026, managing ~19 repositories across a Rails monolith, open-source tools, and infrastructure projects.
+[Pickletown](examples/pickletown/README.md) is a working town that has been in daily use since early 2026, managing ~120 repositories across a Rails monolith, open-source tools, and infrastructure projects.
 
 ```text
 ~/pickleton/
@@ -24,9 +24,10 @@ A town is a git repo that organizes multiple external repositories, tracks work 
       bare.git/
       worktrees/
         main/
+  beans/
   projects/
+  workflows/
   .claude/
-  .sessions/
 ```
 
 Each repository is tracked as a bare clone with isolated working areas per branch. Multiple branches are active simultaneously, no stashing or switching required. A CLI (`pt`) ties it together: one command to check the status of a piece of work across its tracking item, branch, worktree, and PR.
