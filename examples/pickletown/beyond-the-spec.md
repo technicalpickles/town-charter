@@ -63,7 +63,7 @@ That last stage is the single-procedure-two-runtimes pattern in action: the same
 
 #### The Reality
 
-Sanitation is no longer manually invoked. It runs as `workflows/sanitation/bin/sanitation --cron`, fired by a launchd agent four times a day (see The Daemon Layer below). Unattended, it drains the deterministic, auto-approved actions and skips the interactive triage. Run with a TTY, it stops at the handoff so a human can decide the rest. The pending queue is also browsable: `pt sanitation review --open` loads it in the web app's salvage-yard page, and `pt sanitation work` drains it through a Claude session with the `/sanitation` skill loaded.
+Sanitation is no longer manually invoked. It runs as `workflows/sanitation/bin/sanitation --cron`, fired by a [launchd][launchd] agent four times a day (see The Daemon Layer below). Unattended, it drains the deterministic, auto-approved actions and skips the interactive triage. Run with a TTY, it stops at the handoff so a human can decide the rest. The pending queue is also browsable: `pt sanitation review --open` loads it in the web app's salvage-yard page, and `pt sanitation work` drains it through a Claude session with the `/sanitation` skill loaded.
 
 The old aspiration (a worker that runs on a schedule and cleans up what it can without asking) is now just how it works. Getting there did not need a citizen runtime. It needed the workflow to be boring, predictable, and reversible, which is what makes unattended acting safe.
 
@@ -212,7 +212,7 @@ Underneath the one-shot workflows sits a small persistent layer: a web app for r
 
 ### The Web App
 
-`pt serve` boots a Sinatra app on Puma at port 9876. It is a local reading room for everything the town produces: a hud view of active work, a beans browser, rendered gazette editions, a podcast player, project and repo directories, session history, workflow graphs, the sanitation review queue (the salvage yard), a GitHub-notification triage board, and the character portraits. The views are thin; the data comes from small API modules under `web/lib/` (`beans_api.rb`, `gazette_api.rb`, `sanitation_api.rb`, and so on) that read the same files the CLI and workflows write. Nothing in the web app is authoritative. It is a window onto the workspace, which is why the morning-gazette workflow pushes each edition: the web app picks it up on the next request.
+`pt serve` boots a [Sinatra][sinatra] app on [Puma][puma] at port 9876. It is a local reading room for everything the town produces: a hud view of active work, a beans browser, rendered gazette editions, a podcast player, project and repo directories, session history, workflow graphs, the sanitation review queue (the salvage yard), a GitHub-notification triage board, and the character portraits. The views are thin; the data comes from small API modules under `web/lib/` (`beans_api.rb`, `gazette_api.rb`, `sanitation_api.rb`, and so on) that read the same files the CLI and workflows write. Nothing in the web app is authoritative. It is a window onto the workspace, which is why the morning-gazette workflow pushes each edition: the web app picks it up on the next request.
 
 The same process is also the town's MCP server (`/mcp`). It exposes the four repo-writing operations (`track_repo`, `untrack_repo`, `create_worktree`, `new_repo`) so a Claude Code session can perform them outside the Bash sandbox, and it invokes the same Ruby command classes the CLI does. Read-only pt commands stay on the shell.
 
@@ -220,9 +220,9 @@ The same process is also the town's MCP server (`/mcp`). It exposes the four rep
 
 `pt serve` can run by hand, but the durable setup splits into two layers.
 
-**Resident processes** are supervised by [pitchfork](https://github.com/endevco/pitchfork), a local daemon manager: `pt-serve` (the web app and MCP server, started at login, hot-reloaded when files under `web/` change), a headless browser for agent-driven web work, and a self-hosted profiler UI. A Dolt SQL server for the session store is the one resident process managed by launchd instead, because every session's start hook depends on it and it should not be tied to the dev-loop tooling.
+**Resident processes** are supervised by [pitchfork](https://github.com/endevco/pitchfork), a local daemon manager: `pt-serve` (the web app and MCP server, started at login, hot-reloaded when files under `web/` change), a headless browser for agent-driven web work, and a self-hosted profiler UI. A Dolt SQL server for the session store is the one resident process managed by [launchd][launchd] instead, because every session's start hook depends on it and it should not be tied to the dev-loop tooling.
 
-**Scheduled jobs** are macOS launchd agents, six as of September 2026: the sanitation sweep (four times a day), the morning gazette (07:30), the weekly review (Monday 08:15), the PR watch-register poller (every fifteen minutes), a GitHub-notification triage sweep (08:00), and the Dolt server above. Each plist lives next to the thing it runs (`workflows/<name>/launchd/`, `projects/<name>/launchd/`) and is symlinked into `~/Library/LaunchAgents`. Sanitation started life as a pitchfork cron daemon and moved to launchd after a scheduling bug (a project-scoped cron daemon that never registered and so never fired) proved hard to see; launchd is dumber and that is the point.
+**Scheduled jobs** are macOS [launchd][launchd] agents, six as of September 2026: the sanitation sweep (four times a day), the morning gazette (07:30), the weekly review (Monday 08:15), the PR watch-register poller (every fifteen minutes), a GitHub-notification triage sweep (08:00), and the Dolt server above. Each plist lives next to the thing it runs (`workflows/<name>/launchd/`, `projects/<name>/launchd/`) and is symlinked into `~/Library/LaunchAgents`. Sanitation started life as a pitchfork cron daemon and moved to [launchd][launchd] after a scheduling bug (a project-scoped cron daemon that never registered and so never fired) proved hard to see; [launchd][launchd] is dumber and that is the point.
 
 This is the managed layer above the one-shot subprocesses. Workflows run and exit; the daemon layer is the handful of things that need to stay up or fire on a schedule. The sanitation sweep is where the [autonomy spectrum](../../autonomy-spectrum.md) actually advanced: it is the same workflow a human runs interactively, just pointed at a schedule with the interactive steps switched off. If its cloud credentials have expired it downgrades gracefully (skips the LLM judge, still cleans deterministically) rather than failing.
 
@@ -320,8 +320,8 @@ The spec's CLI Patterns concept is about a single front door to the workspace. P
 
 - **`pt serve`** runs the web app and MCP server; **`pt characters`** manages the persona gallery and its portraits.
 - **`pt crew`** spawns, watches, attaches to, and tears down focused field crews: a Claude session (interactive or headless) scoped to one bean and one job site, for bounded work that should not silt up the main session.
-- **`pt sessions`** and **`pt handoffs`** track past Claude sessions and the handoff notes that resume them, the connective tissue behind session continuity. **`pt workspaces`** turns every repo and project into a tmux session you can jump between.
-- **`pt watch`** is the PR watch register: the author's own open PRs, each with one recommended next action, kept fresh by a launchd poller. Skills and an unpark hook read it before asserting a PR's state.
+- **`pt sessions`** and **`pt handoffs`** track past Claude sessions and the handoff notes that resume them, the connective tissue behind session continuity. **`pt workspaces`** turns every repo and project into a [tmux][tmux] session you can jump between.
+- **`pt watch`** is the PR watch register: the author's own open PRs, each with one recommended next action, kept fresh by a [launchd][launchd] poller. Skills and an unpark hook read it before asserting a PR's state.
 - **`pt search`** runs semantic search across the town's content and tracked repos; **`pt sup`** prints a morning dashboard; **`pt sync`** decides what to commit, skip, or gitignore on a sweep; **`pt plugin sync`** mirrors the town's own plugin into Claude Code's cache; **`pt init`** scaffolds a new town for someone else.
 
 None of this is in the spec, and most of it would not generalize cleanly. It is here because a workspace you live in every day grows a CLI shaped like its owner's habits. That is the CLI Patterns concept working as intended, not drifting from it.
@@ -335,5 +335,10 @@ These extensions are not in the Town Charter spec yet. Some may make it in. Work
 The foundation matters here. The spec's eight concepts (workspace, work tracking, projects, AI conventions, session tracking, session continuity, CLI patterns, routing and delegation) are what make these experiments possible. Workflows work because the workspace has a consistent structure to operate on. The gazette works because session logs, beans, and git activity are all queryable. Skills work because the AI conventions system gives them a place to live and a way to trigger.
 
 That is the point of a good spec: it creates a platform you can build on.
+
+[sinatra]: https://sinatrarb.com/
+[puma]: https://puma.io/
+[launchd]: https://www.launchd.info/
+[tmux]: https://github.com/tmux/tmux
 
 <!-- markdownlint-enable MD036 -->

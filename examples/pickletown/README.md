@@ -69,7 +69,7 @@ Pickletown lives at `~/pickleton/`. The top-level structure:
   .claude/
 ```
 
-Tracked repos come in two layouts. The original: `repos/<name>/bare.git/` holds a bare clone and `repos/<name>/worktrees/<branch>/` holds each working area. The newer one, adopted in September 2026 to work with the `wt` (worktrunk) tool: `repos/<name>/checkout/` is a plain clone and extra branches live at `checkout/.claude/worktrees/<branch>/`. `pt` detects which layout a repo uses and every command dispatches on it. Branch directories for work-unit branches carry a bean ID (like `gt-pw2k+add-oauth`) so you can trace a worktree back to its tracking item at a glance.
+Tracked repos come in two layouts. The original: `repos/<name>/bare.git/` holds a bare clone and `repos/<name>/worktrees/<branch>/` holds each working area. The newer one, adopted in September 2026 to work with the `wt` ([worktrunk][worktrunk]) tool: `repos/<name>/checkout/` is a plain clone and extra branches live at `checkout/.claude/worktrees/<branch>/`. `pt` detects which layout a repo uses and every command dispatches on it. Branch directories for work-unit branches carry a bean ID (like `gt-pw2k+add-oauth`) so you can trace a worktree back to its tracking item at a glance.
 
 ### Tool Choices
 
@@ -193,7 +193,7 @@ Each project has an epic bean. The town-charter project's epic is `gt-rp12`. Rel
 
 ### Tool Choices
 
-`pt` still has no `pt project create`. Project creation is manual: `mkdir -p projects/<name>/{plans,design,brainstorming,handoffs}`, then create the README manifest and the epic bean. What did land is `pt handoffs list|where|new`, which knows the project layout well enough to put a dated handoff in the right `handoffs/` directory, and `pt workspaces`, which treats each project as a workspace you can jump to (as a tmux session) alongside tracked repos. Navigation is otherwise by convention.
+`pt` still has no `pt project create`. Project creation is manual: `mkdir -p projects/<name>/{plans,design,brainstorming,handoffs}`, then create the README manifest and the epic bean. What did land is `pt handoffs list|where|new`, which knows the project layout well enough to put a dated handoff in the right `handoffs/` directory, and `pt workspaces`, which treats each project as a workspace you can jump to (as a [tmux][tmux] session) alongside tracked repos. Navigation is otherwise by convention.
 
 ### What Works Well
 
@@ -225,7 +225,7 @@ Rules are loaded at every session start, so they stay short and say *what*, poin
 - **`pt-root-stays-on-main.md`** is the shared-tree rule: never switch the workspace root off `main`, always scope commits to paths, re-check the branch right before acting. It exists because concurrent sessions kept getting their commits captured by a branch another session had left checked out.
 - **`pt-source-protection.md`** prevents modifying pt's own source code during unrelated work. If you are fixing a bug in zenpayroll and notice something wrong with pt, the rule says to create a bean, not edit the CLI mid-task.
 - **`sandbox-git-writes.md`** covers the Bash sandbox: which git writes it denies, that repo writes go through the MCP server, and that everything else is a per-command unsandboxed retry.
-- **`working-with-mise.md`** covers mise trust requirements and what to do when trust errors appear. The rule exists because those errors are easy to dismiss as noise when they actually block real work.
+- **`working-with-mise.md`** covers [mise][mise] trust requirements and what to do when trust errors appear. The rule exists because those errors are easy to dismiss as noise when they actually block real work.
 - **`projects.md`**, **`code-reviews.md`**, **`jira.md`**, **`workflows.md`**, **`watch-register.md`**, **`working-with-pitchfork.md`**, **`working-with-qmd.md`** cover the remaining conventions: project layout, review handling, the Jira conventions per project, the workflow runtime, the PR watch register, and the two local services sessions lean on.
 
 ### Rules Versus Skills
@@ -258,7 +258,7 @@ Pickletown records sessions through a `SessionStart` hook shipped in its plugin.
 
 ### The Store
 
-The store started as an append-only JSONL file (`.sessions/session-index.jsonl`). In September 2026 it moved to a [Dolt](https://www.dolthub.com/) database under `~/.local/state/pickletown/dolt/`, served by a `dolt sql-server` that launchd keeps alive. Two reasons: the JSONL file was a perpetually-dirty tracked file in a working tree shared by every session, and concurrent hook invocations writing to a Dolt data-dir without a server raced on its manifest (5 of 8 parallel writers failed in one measurement; through the server, none). The CLI is unchanged: `pt sessions list|show|track|resume` read and write the same rows, and `pt sessions track --bean <id>` records an explicit association mid-session.
+The store started as an append-only JSONL file (`.sessions/session-index.jsonl`). In September 2026 it moved to a [Dolt](https://www.dolthub.com/) database under `~/.local/state/pickletown/dolt/`, served by a `dolt sql-server` that [launchd][launchd] keeps alive. Two reasons: the JSONL file was a perpetually-dirty tracked file in a working tree shared by every session, and concurrent hook invocations writing to a Dolt data-dir without a server raced on its manifest (5 of 8 parallel writers failed in one measurement; through the server, none). The CLI is unchanged: `pt sessions list|show|track|resume` read and write the same rows, and `pt sessions track --bean <id>` records an explicit association mid-session.
 
 Because each row includes the working directory, you can still answer "when did this branch last get attention" or "how many sessions touched zenpayroll this week", now with SQL instead of grep.
 
@@ -278,7 +278,7 @@ This association is partially automated: the directory-to-repo-to-branch chain i
 
 **Association discovery is basic.** The working directory gives you repo and branch, but that is the extent of the automation. If a session discusses work across multiple repos, only the starting directory gets recorded.
 
-**Transcript scanning is a separate tool.** A session transcript contains rich information about what was discussed, which beans were referenced, and what decisions were made. Pickletown mines that with `cq` (SQL over session transcripts via DuckDB), a tracked repo of its own, and a `scripts/active-threads` report that feeds the morning gazette. Neither writes associations back into the session store; the discovered-association pipeline the spec describes still does not exist.
+**Transcript scanning is a separate tool.** A session transcript contains rich information about what was discussed, which beans were referenced, and what decisions were made. Pickletown mines that with `cq` (SQL over session transcripts via [DuckDB][duckdb]), a tracked repo of its own, and a `scripts/active-threads` report that feeds the morning gazette. Neither writes associations back into the session store; the discovered-association pipeline the spec describes still does not exist.
 
 ---
 
@@ -328,9 +328,9 @@ The spec-level commands map to four areas:
 
 **Work unit lifecycle.** `pt status` shows the combined state of a bean, branch, worktree, and PR. `pt resume` prints the worktree path and loads context for picking work back up. `pt close` verifies the PR merged, updates the bean, and offers to clean up the worktree. `pt sup` is the morning dashboard.
 
-**Overview.** `pt worktrees` gives a cross-repo view of all active working areas. `pt beans list` shows tracking items, filterable by tag, status, or repo. `pt workspaces` lists every repo and project as a workspace and connects to it as a tmux session.
+**Overview.** `pt worktrees` gives a cross-repo view of all active working areas. `pt beans list` shows tracking items, filterable by tag, status, or repo. `pt workspaces` lists every repo and project as a workspace and connects to it as a [tmux][tmux] session.
 
-Beyond those, `pt` fronts the town's automation: `pt sanitation` (the maintenance sweep), `pt crew` (dispatch a field crew), `pt watch` (the PR watch register: your own open PRs, one recommended action each, refreshed every fifteen minutes by a launchd poller), `pt sessions` and `pt handoffs`, `pt search` (semantic search over the town via qmd), `pt serve` (the web UI and MCP server), `pt sync` (commit the workspace repo's own changes, with Claude deciding what to commit, skip, or gitignore), `pt characters`, `pt plugin sync`, `pt hooks`, and `pt init` for standing up a new town.
+Beyond those, `pt` fronts the town's automation: `pt sanitation` (the maintenance sweep), `pt crew` (dispatch a field crew), `pt watch` (the PR watch register: your own open PRs, one recommended action each, refreshed every fifteen minutes by a [launchd][launchd] poller), `pt sessions` and `pt handoffs`, `pt search` (semantic search over the town via qmd), `pt serve` (the web UI and MCP server), `pt sync` (commit the workspace repo's own changes, with Claude deciding what to commit, skip, or gitignore), `pt characters`, `pt plugin sync`, `pt hooks`, and `pt init` for standing up a new town.
 
 ### Ref Resolution
 
@@ -338,7 +338,7 @@ All workflow commands accept flexible refs. A bean ID (`gt-pw2k`), a short ID (`
 
 ### What Works Well
 
-**Deterministic operations.** `pt checkout zenpayroll my-branch` always creates the worktree at `repos/zenpayroll/worktrees/my-branch/`. There is no ambiguity about where things go. One command replaces what would otherwise be four manual steps (fetch, create worktree, set path, trust mise).
+**Deterministic operations.** `pt checkout zenpayroll my-branch` always creates the worktree at `repos/zenpayroll/worktrees/my-branch/`. There is no ambiguity about where things go. One command replaces what would otherwise be four manual steps (fetch, create worktree, set path, trust [mise][mise]).
 
 **Convention enforcement.** The CLI encodes the workspace's directory layout and naming patterns. You cannot accidentally create a worktree in the wrong place or track a repo with a conflicting name, because the tool prevents it.
 
@@ -350,7 +350,7 @@ All workflow commands accept flexible refs. A bean ID (`gt-pw2k`), a short ID (`
 
 **Discovery.** `pt --help` is now a full command map grouped by family, which fixes the "what exists" problem. It still does not explain the flow (track, then checkout, then status, then close); that lives in the `pt-repos` and `pt-work-units` skills and in `docs/onboarding-martin.md`, a walkthrough written for the first person other than the author to stand up a town with `pt init`.
 
-**The CLI is a shared surface for humans and hooks.** `pt sessions start` is called by a Claude Code hook on every session start; `pt claude-hook` runs the crew-orientation and dispatcher-nudge hooks; the MCP server invokes the same command classes the CLI does. A slow or failing `pt` command is therefore a slow or failing session start. The workspace resolver in particular is written to never raise and to treat any unreadable signal (no tmux server, cwd outside the tree) as "unknown" rather than an error.
+**The CLI is a shared surface for humans and hooks.** `pt sessions start` is called by a Claude Code hook on every session start; `pt claude-hook` runs the crew-orientation and dispatcher-nudge hooks; the MCP server invokes the same command classes the CLI does. A slow or failing `pt` command is therefore a slow or failing session start. The workspace resolver in particular is written to never raise and to treat any unreadable signal (no [tmux][tmux] server, cwd outside the tree) as "unknown" rather than an error.
 
 ---
 
@@ -368,7 +368,7 @@ For research and recon, Dispatch fans out **survey crews**: subagents inside the
 
 ### Local isolated: field crews
 
-For bounded fieldwork, Dispatch spawns a **field crew** with `pt crew`: a separate Claude session, scoped to one bean and one job site (worktree), running under a lean [`cenv`](https://github.com/technicalpickles/cenv) environment so its plugin and config surface is minimal. Because it is a separate session in its own working area, it can edit, build, and iterate without touching Dispatch's view. `pt crew` spawns, watches, attaches to, and tears down these crews. Two flavors exist: the interactive TUI in a tmux window (attachable, watched by polling the pane), and `--headless`, which runs `claude -p` with streaming JSON output rendered live in the pane and writes a compact `result.json` the watcher polls for the exact completion signal.
+For bounded fieldwork, Dispatch spawns a **field crew** with `pt crew`: a separate Claude session, scoped to one bean and one job site (worktree), running under a lean [`cenv`](https://github.com/technicalpickles/cenv) environment so its plugin and config surface is minimal. Because it is a separate session in its own working area, it can edit, build, and iterate without touching Dispatch's view. `pt crew` spawns, watches, attaches to, and tears down these crews. Two flavors exist: the interactive TUI in a [tmux][tmux] window (attachable, watched by polling the pane), and `--headless`, which runs `claude -p` with streaming JSON output rendered live in the pane and writes a compact `result.json` the watcher polls for the exact completion signal.
 
 The job site is created by Dispatch, not the crew, through the MCP `create_worktree` tool with a `trust_env` parameter that pre-registers Claude Code's folder trust for the crew's environment, so the crew is not stopped by a "do you trust this folder?" prompt it cannot answer. A `dispatch-prep` subagent does the noisy prep (checkout, trust, toolchain warmup) outside Dispatch's context and reports a ready-or-blocked verdict. A `SessionStart` hook in the crew's environment delivers the minimal job-site safety rules (use `pt beans`, retry sandbox-denied git writes unsandboxed, `mise trust`, stay inside the job site) so the crew does not depend on the workspace's full rule set leaking in. As of late August 2026, about a hundred work orders had been dispatched this way.
 
@@ -522,3 +522,9 @@ Five sessions, four repos, the full shape of the day. Sessions that produced com
 ---
 
 That is one day. The pattern repeats: create work, switch freely, resume by reference, track new repos as they appear, close what is done, review what happened. Each workflow is a single operation because the workspace structure and the work unit model make it possible. The commands are simple. The simplicity comes from the conventions underneath.
+
+[worktrunk]: https://worktrunk.dev
+[mise]: https://mise.jdx.dev/
+[duckdb]: https://duckdb.org/
+[tmux]: https://github.com/tmux/tmux
+[launchd]: https://www.launchd.info/
