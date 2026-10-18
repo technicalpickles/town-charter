@@ -1,4 +1,4 @@
 [tools]
-hk = "1.40.0"
+hk = "2.0.0"
 "npm:markdownlint-cli2" = "latest"
 lychee = "latest"
