@@ -1,4 +1,4 @@
-amends "package://github.com/jdx/hk/releases/download/v1.40.0/hk@1.40.0#/Config.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Config.pkl"
 
 local markdownlint = new Step {
   glob = List("*.md", "**/*.md")
